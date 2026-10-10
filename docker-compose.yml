@@ -1,0 +1,17 @@
+services:
+  tv:
+    build: ./server
+    ports:
+      - "8080:8080"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      DATA_DIR: /data
+      ALLOW_REGISTER: "true"
+      CONTACT_EMAIL: privacidad@renace.tech
+    volumes:
+      - tv-data:/data
+    restart: unless-stopped
+
+volumes:
+  tv-data:

@@ -1,0 +1,327 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background: #001633;
+  color: #ffffff;
+  font-family: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #001633;
+}
+
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #001633;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(40px);
+  opacity: 0.85;
+}
+
+.orb-a {
+  width: 46vw;
+  height: 46vw;
+  left: -8vw;
+  top: -10vh;
+  background: #0087ff;
+  animation: drift 16s ease-in-out infinite alternate;
+}
+
+.orb-b {
+  width: 38vw;
+  height: 38vw;
+  right: -10vw;
+  top: 18vh;
+  background: #14c8b4;
+  animation: drift 20s ease-in-out infinite alternate-reverse;
+}
+
+.orb-c {
+  width: 42vw;
+  height: 42vw;
+  left: 28vw;
+  bottom: -18vh;
+  background: #0a4aa6;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.arrow-field {
+  position: absolute;
+  inset: -20%;
+  background-image: linear-gradient(45deg, transparent 46%, rgba(143, 211, 255, 0.16) 50%, transparent 54%);
+  background-size: 72px 72px;
+  animation: slide-field 22s linear infinite;
+  mask-image: radial-gradient(circle at 50% 30%, black, transparent 72%);
+}
+
+main, footer, header {
+  position: relative;
+  z-index: 1;
+}
+
+.headline {
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  text-shadow: 0 10px 40px rgba(0, 22, 51, 0.45);
+}
+
+.cta {
+  box-shadow: 0 0 0 0 rgba(0, 135, 255, 0.45);
+  animation: pulse-ring 2.8s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}
+
+.tv {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 24px 0 0;
+  background: linear-gradient(45deg, #00204e 0%, #0060bf 55%, #0087ff 100%);
+  box-shadow: 0 24px 80px rgba(0, 135, 255, 0.28);
+}
+
+.tv-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.22), transparent 68%);
+  transform: translateX(-120%);
+  animation: sheen 5.5s ease-in-out infinite;
+}
+
+.row-in {
+  animation: row-in 0.8s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.price-live {
+  text-shadow: 0 0 24px rgba(143, 211, 255, 0.8);
+}
+
+.price-live.flash {
+  animation: flash 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.card {
+  border-radius: 0 24px 0 0;
+  background: rgba(0, 32, 78, 0.55);
+  backdrop-filter: blur(16px);
+  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1), background-color 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  background: rgba(0, 96, 191, 0.55);
+}
+
+.glyph svg {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 460px;
+  overflow: hidden;
+  border-radius: 0 24px 0 0;
+  background:
+    linear-gradient(20deg, rgba(0, 22, 51, 0.88), rgba(0, 32, 78, 0.8) 50%, rgba(10, 74, 166, 0.86)),
+    url("/brand/pattern.svg");
+  background-size: auto, 72px 72px;
+  box-shadow: 0 24px 80px rgba(0, 135, 255, 0.28);
+}
+
+.app-side {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 20px;
+  background: rgba(0, 22, 51, 0.55);
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.app-nav svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.app-nav.is-on {
+  background: #0087ff;
+}
+
+.app-main {
+  padding: 28px;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tape {
+  overflow: hidden;
+  background: linear-gradient(45deg, #0060bf, #0087ff 55%, #14c8b4);
+}
+
+.tape-track {
+  display: flex;
+  gap: 48px;
+  width: max-content;
+  animation: marquee 18s linear infinite;
+}
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(6%, 8%, 0) scale(1.12); }
+}
+
+@keyframes slide-field {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(72px, 72px, 0); }
+}
+
+@keyframes sheen {
+  0%, 45% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes flash {
+  0% { transform: scale(1.18); color: #ffffff; }
+  100% { transform: none; color: #8fd3ff; }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(0, 135, 255, 0.45); }
+  70% { box-shadow: 0 0 0 14px rgba(0, 135, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 135, 255, 0); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(4rem);
+  filter: blur(12px);
+  transition:
+    opacity 800ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 800ms cubic-bezier(0.32, 0.72, 0, 1),
+    filter 800ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.word {
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.word.on {
+  color: #8fd3ff;
+}
+
+.nav-overlay {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.nav-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav-link {
+  opacity: 0;
+  transform: translateY(3rem);
+  transition:
+    opacity 700ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.nav-overlay.is-open .nav-link {
+  opacity: 1;
+  transform: none;
+}
+
+.bar {
+  transition: transform 700ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.menu-open .bar-a {
+  transform: translateY(5px) rotate(45deg);
+}
+
+.menu-open .bar-b {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .word,
+  .nav-link,
+  .bar,
+  .nav-overlay {
+    transition: none;
+    filter: none;
+    transform: none;
+    opacity: 1;
+  }
+
+  .nav-overlay {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .nav-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .orb,
+  .arrow-field,
+  .tv-sheen,
+  .row-in,
+  .price-live,
+  .cta,
+  .tape-track {
+    animation: none;
+  }
+}

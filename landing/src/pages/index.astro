@@ -1,0 +1,209 @@
+---
+import Base from '../layouts/Base.astro';
+import { faqs, panelUrl } from '../lib/site';
+
+const title = 'RENACE Pantalla, el menú del local en la televisión';
+const description = 'Vincula la TV con un código de 6 caracteres, elige una plantilla y cambia los precios desde el panel. La pantalla los muestra a pantalla completa.';
+
+const benefits = [
+  { glyph: 'price', title: 'El precio se edita en un campo', text: 'Cambias RD$ 90 por RD$ 125 y la televisión lo toma en el siguiente ciclo.' },
+  { glyph: 'code', title: 'La TV entra con un código', text: 'Seis caracteres en el control. El correo se queda en el panel.' },
+  { glyph: 'motion', title: 'La carta se mueve', text: 'Aurora, Vitrina y Cinta animan productos y precios sin exportar un video.' },
+  { glyph: 'screen', title: 'Sigue si la red falla un momento', text: 'La app guarda una copia de los archivos y la pantalla no se queda en negro.' },
+];
+
+const glyphs: Record<string, string> = {
+  price: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0087FF"/><path fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" d="M16 8v16M12.2 12.2c.7-1.4 2-2.2 3.8-2.2 2.3 0 3.8 1.2 3.8 3s-1.6 2.6-3.8 3.2c-2.2.6-3.8 1.4-3.8 3.2s1.7 3 4 3c1.7 0 3-.7 3.7-2"/></svg>',
+  code: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#00204E"/><path fill="#8FD3FF" d="M8 14h3v4H8zm6.5 0h3v4h-3zM21 14h3v4h-3z"/></svg>',
+  motion: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#14C8B4"/><path fill="#00204E" transform="translate(16 16) rotate(-45) scale(0.72)" d="M-10 -4 H3 V-9 L14 0 L3 9 V4 H-10 Z"/></svg>',
+  screen: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0060BF"/><rect x="7" y="8" width="18" height="12" rx="2" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M12 23h8M16 20v3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+};
+
+const steps = [
+  { n: '01', title: 'Abre la app en la TV', text: 'Aparece el código. La primera vez escribes la dirección del servidor.' },
+  { n: '02', title: 'Crea el menú en el panel', text: 'Eliges la plantilla, el título y el precio de cada producto.' },
+  { n: '03', title: 'Asignas la lista', text: 'La televisión muestra la carta unos 45 segundos, o los segundos que tú pongas.' },
+];
+
+const samples = [
+  { name: 'Espresso', price: 'RD$ 90', note: 'Doble shot' },
+  { name: 'Cappuccino', price: 'RD$ 140', note: 'Favorito' },
+  { name: 'Cold brew', price: 'RD$ 150', note: '12 horas' },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+---
+<Base title={title} description={description}>
+  <main id="contenido">
+    <section class="px-4 pb-16 pt-40">
+      <div class="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2">
+        <div>
+          <h1 class="headline max-w-[680px] text-6xl font-semibold text-balance md:text-7xl">
+            El menú de tu local,<br>en la televisión.
+          </h1>
+          <p class="mt-6 max-w-[680px] text-lg text-pretty text-[#E7F3FF]">
+            Escribes un código, eliges una plantilla y cambias los precios desde el panel. La TV los muestra a pantalla completa.
+          </p>
+          <a href={panelUrl} class="cta mt-6 inline-flex rounded-lg bg-[#0060BF] px-3 py-2 text-base font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#0087FF] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0087FF]">Crear el menú</a>
+          <p class="mt-4 text-sm text-[#E7F3FF]">Tres plantillas con movimiento. Las fotos y los videos siguen en la misma lista.</p>
+        </div>
+        <figure class="tv p-6" data-reveal>
+          <div class="tv-sheen" aria-hidden="true"></div>
+          <p class="relative text-xs font-semibold text-[#8FD3FF]">EN VIVO</p>
+          <p class="relative mt-3 text-4xl font-semibold text-balance">Café del día</p>
+          <ul class="relative mt-6 grid gap-3">
+            {samples.map((item, index) => (
+              <li class="row-in flex items-baseline justify-between gap-4" style={`animation-delay:${index * 140}ms`}>
+                <span>
+                  <span class="block text-xl font-semibold">{item.name}</span>
+                  <span class="text-sm text-[#8FD3FF]">{item.note}</span>
+                </span>
+                <span class:list={['text-2xl font-semibold tabular-nums text-[#8FD3FF]', index === 0 && 'price-live']} data-live-price={index === 0 ? 'true' : undefined}>{item.price}</span>
+              </li>
+            ))}
+          </ul>
+          <figcaption class="relative mt-4 text-sm text-[#D7ECFF]">El espresso cambia de precio solo, como en la TV.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <div class="tape py-4 text-lg font-semibold" aria-hidden="true">
+      <div class="tape-track">
+        {['Espresso · RD$ 90', 'Cappuccino · RD$ 140', 'Cold brew · RD$ 150', 'Latte · RD$ 160', 'Brownie · RD$ 120', 'Espresso · RD$ 90', 'Cappuccino · RD$ 140', 'Cold brew · RD$ 150', 'Latte · RD$ 160', 'Brownie · RD$ 120'].map((item) => <span>{item}</span>)}
+      </div>
+    </div>
+
+    <section class="px-4 py-16" aria-labelledby="beneficios">
+      <div class="mx-auto max-w-5xl">
+        <h2 id="beneficios" class="max-w-[680px] text-4xl font-semibold text-balance" data-reveal>Lo que gana quien atiende la barra</h2>
+        <div class="mt-8 grid gap-4 md:grid-cols-2">
+          {benefits.map((item) => (
+            <article class="card p-6" data-reveal>
+              <span class="glyph" set:html={glyphs[item.glyph]} />
+              <h3 class="mt-4 text-2xl font-semibold text-balance">{item.title}</h3>
+              <p class="mt-2 text-base text-pretty text-[#E7F3FF]">{item.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 py-20" aria-labelledby="frase">
+      <div class="mx-auto max-w-[680px]">
+        <p id="frase" data-tagline class="text-4xl font-semibold text-balance md:text-5xl">
+          <span class="block" data-line>El precio cambia en el panel.</span>
+          <span class="block" data-line>La televisión lo muestra al momento.</span>
+        </p>
+      </div>
+    </section>
+
+    <section id="como" class="px-4 py-16" aria-labelledby="pasos">
+      <div class="mx-auto max-w-5xl">
+        <h2 id="pasos" class="max-w-[680px] text-4xl font-semibold text-balance" data-reveal>Tres pasos y la carta ya está al aire</h2>
+        <ol class="mt-8 grid gap-4 md:grid-cols-3">
+          {steps.map((step) => (
+            <li class="card p-6" data-reveal>
+              <p class="text-sm font-semibold text-[#0087FF]">{step.n}</p>
+              <h3 class="mt-3 text-2xl font-semibold text-balance">{step.title}</h3>
+              <p class="mt-2 text-pretty text-[#E7F3FF]">{step.text}</p>
+            </li>
+          ))}
+        </ol>
+        <p class="mt-6 max-w-[680px] text-pretty text-[#E7F3FF]" data-reveal>El negocio vive en tu servidor. Cierras el registro de cuentas nuevas cuando ya no quieres locales adicionales.</p>
+      </div>
+    </section>
+
+    <section id="app" class="px-4 py-16" aria-labelledby="aplicacion">
+      <div class="mx-auto max-w-5xl">
+        <h2 id="aplicacion" class="headline max-w-[680px] text-4xl font-semibold text-balance md:text-5xl" data-reveal>La aplicación</h2>
+        <p class="mt-4 max-w-[680px] text-pretty text-[#E7F3FF]" data-reveal>El panel del negocio. Cambias el precio aquí y la televisión lo toma en el siguiente ciclo.</p>
+        <div class="app-shell mt-8" data-reveal>
+          <aside class="app-side">
+            <p class="flex items-center gap-2 text-sm font-semibold"><img src="/brand/mark.svg" width="28" height="28" alt="">Pantalla</p>
+            <p class="app-nav is-on"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 20h8M12 16v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Pantallas</p>
+            <p class="app-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Menús</p>
+            <p class="app-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Archivos</p>
+            <p class="app-nav"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="4" rx="1.2" fill="currentColor"/><rect x="4" y="11" width="16" height="4" rx="1.2" fill="currentColor" opacity=".7"/></svg>Listas</p>
+          </aside>
+          <div class="app-main">
+            <p class="text-sm font-semibold text-[#8FD3FF]">Menú · Aurora</p>
+            <p class="mt-2 text-3xl font-semibold">Café del día</p>
+            <ul class="mt-4 grid gap-2">
+              {samples.map((item) => (
+                <li class="flex items-center justify-between rounded-lg bg-white/10 px-3 py-2">
+                  <span>{item.name}</span>
+                  <span class="font-semibold text-[#8FD3FF]">{item.price}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="plantillas" class="px-4 py-16" aria-labelledby="cartas">
+      <div class="mx-auto max-w-5xl">
+        <h2 id="cartas" class="max-w-[680px] text-4xl font-semibold text-balance" data-reveal>Tres cartas, los mismos precios</h2>
+        <div class="mt-8 grid gap-4 md:grid-cols-3">
+          <article class="card p-6" data-reveal>
+            <h3 class="text-2xl font-semibold">Aurora</h3>
+            <p class="mt-2 text-pretty text-[#E7F3FF]">Fondo navy. Los precios en azul claro y las filas entran una tras otra.</p>
+          </article>
+          <article class="card p-6" data-reveal>
+            <h3 class="text-2xl font-semibold">Vitrina</h3>
+            <p class="mt-2 text-pretty text-[#E7F3FF]">Un producto grande que rota. El resto de la carta queda al lado, con su precio.</p>
+          </article>
+          <article class="card p-6" data-reveal>
+            <h3 class="text-2xl font-semibold">Cinta</h3>
+            <p class="mt-2 text-pretty text-[#E7F3FF]">La lista se lee de un vistazo y una cinta recorre nombre y precio.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="preguntas" class="px-4 py-16" aria-labelledby="faq-title">
+      <div class="mx-auto max-w-3xl">
+        <h2 id="faq-title" class="text-4xl font-semibold text-balance" data-reveal>Preguntas de quien va a colgar la TV</h2>
+        <div class="mt-8 grid gap-3">
+          {faqs.map((item) => (
+            <details class="card p-6" data-reveal>
+              <summary class="cursor-pointer text-xl font-semibold text-balance focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0087FF]">{item.q}</summary>
+              <p class="mt-3 text-pretty text-[#E7F3FF]">{item.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="px-4 py-20">
+      <div class="mx-auto max-w-[680px]" data-reveal>
+        <h2 class="text-4xl font-semibold text-balance md:text-5xl">Pon el menú en la televisión esta tarde.</h2>
+        <p class="mt-4 text-lg text-pretty text-[#E7F3FF]">Crea el negocio, vincula el código y guarda el primer precio. La pantalla lo muestra.</p>
+        <a href={panelUrl} class="cta mt-6 inline-flex rounded-lg bg-[#0060BF] px-3 py-2 text-base font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#0087FF] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0087FF]">Crear el menú</a>
+      </div>
+    </section>
+  </main>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)}></script>
+  <script>
+    const price = document.querySelector('[data-live-price]');
+    const values = ['RD$ 90', 'RD$ 125', 'RD$ 110'];
+    let index = 0;
+    if (price && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.setInterval(() => {
+        index = (index + 1) % values.length;
+        price.textContent = values[index];
+        price.classList.remove('flash');
+        void price.offsetWidth;
+        price.classList.add('flash');
+      }, 2800);
+    }
+  </script>
+</Base>

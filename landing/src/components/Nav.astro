@@ -1,0 +1,51 @@
+---
+import { panelUrl } from '../lib/site';
+const path = Astro.url.pathname;
+const links = [
+  { href: '/#como', label: 'Cómo funciona' },
+  { href: '/#plantillas', label: 'Plantillas' },
+  { href: '/#preguntas', label: 'Preguntas' },
+];
+---
+<a class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-base focus:font-semibold focus:text-black" href="#contenido">Saltar al contenido</a>
+<header class="pointer-events-none fixed inset-x-0 top-0 z-50">
+  <nav class="pointer-events-auto mx-auto mt-6 flex w-max items-center gap-3 rounded-full border border-white/20 bg-[#00204E]/70 px-3 py-2 backdrop-blur-xl" aria-label="Principal">
+    <a href="/" class="flex items-center gap-2 px-3 text-sm font-semibold" aria-current={path === '/' ? 'page' : undefined}>
+      <img src="/brand/mark.svg" width="28" height="28" alt="" class="h-7 w-7">
+      Pantalla
+    </a>
+    <div class="hidden items-center gap-1 md:flex">
+      {links.map((link) => (
+        <a href={link.href} class="rounded-full px-3 py-2 text-sm font-semibold text-[#9B9B9B] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0087FF]">{link.label}</a>
+      ))}
+    </div>
+    <a href={panelUrl} class="rounded-lg bg-[#0060BF] px-3 py-2 text-sm font-semibold text-white transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[#0087FF] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0087FF]">Crear el menú</a>
+    <button id="menu-toggle" class="relative h-8 w-8 md:hidden" type="button" aria-expanded="false" aria-controls="nav-overlay" aria-label="Abrir menú">
+      <span class="bar bar-a absolute left-1 right-1 top-[11px] h-0.5 bg-white"></span>
+      <span class="bar bar-b absolute left-1 right-1 top-[19px] h-0.5 bg-white"></span>
+    </button>
+  </nav>
+</header>
+<div id="nav-overlay" class="nav-overlay fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-3xl md:hidden" hidden>
+  <div class="grid gap-6 text-center">
+    {links.map((link, index) => (
+      <a href={link.href} class="nav-link text-4xl font-semibold" style={`transition-delay:${100 + index * 50}ms`}>{link.label}</a>
+    ))}
+    <a href={panelUrl} class="nav-link text-4xl font-semibold text-[#8FD3FF]" style="transition-delay:250ms">Crear el menú</a>
+  </div>
+</div>
+<script>
+  const toggle = document.getElementById('menu-toggle');
+  const overlay = document.getElementById('nav-overlay');
+  function setOpen(open: boolean) {
+    if (!toggle || !overlay) return;
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    toggle.classList.toggle('menu-open', open);
+    overlay.classList.toggle('is-open', open);
+    overlay.hidden = false;
+    if (!open) window.setTimeout(() => { if (!overlay.classList.contains('is-open')) overlay.hidden = true; }, 700);
+  }
+  toggle?.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  overlay?.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setOpen(false)));
+</script>

@@ -1,0 +1,18 @@
+{
+  "name": "renace-pantalla",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Servidor multi-negocio para menús en Android TV.",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.4.0"
+  }
+}

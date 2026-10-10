@@ -1,0 +1,16 @@
+node_modules/
+landing/dist/
+data/
+.env
+*.log
+
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/key.properties
+android/keystore/
+android/*.jks
+android/*.keystore
+
+.DS_Store

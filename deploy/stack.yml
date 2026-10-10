@@ -1,0 +1,45 @@
+services:
+  tv:
+    image: renace-tv:local
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8080
+      DATA_DIR: /data
+      ALLOW_REGISTER: "true"
+      CONTACT_EMAIL: privacidad@renace.tech
+      PUBLIC_BASE_URL: https://tv.renace.tech
+    volumes:
+      - tv-data:/data
+    networks:
+      - RenaceNet
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          memory: 768M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=RenaceNet"
+        - "traefik.http.routers.renace-tv-http.rule=Host(`tv.renace.tech`)"
+        - "traefik.http.routers.renace-tv-http.entrypoints=web"
+        - "traefik.http.routers.renace-tv-http.middlewares=renace-tv-https"
+        - "traefik.http.routers.renace-tv-https.rule=Host(`tv.renace.tech`)"
+        - "traefik.http.routers.renace-tv-https.entrypoints=websecure"
+        - "traefik.http.routers.renace-tv-https.tls=true"
+        - "traefik.http.routers.renace-tv-https.tls.certresolver=letsencryptresolver"
+        - "traefik.http.middlewares.renace-tv-https.redirectscheme.scheme=https"
+        - "traefik.http.services.renace-tv-svc.loadbalancer.server.port=8080"
+
+volumes:
+  tv-data:
+
+networks:
+  RenaceNet:
+    external: true

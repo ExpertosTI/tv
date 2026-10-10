@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RENACE Pantalla</string>
+    <string name="brand">RENACE</string>
+    <string name="pairing_title">Escribe este código en el panel</string>
+    <string name="pairing_help">Entra al panel del negocio y vincula esta TV.</string>
+    <string name="new_code">Nuevo código</string>
+    <string name="server">Servidor</string>
+    <string name="waiting">Esta pantalla ya está vinculada. Elige una lista en el panel.</string>
+    <string name="preparing">Preparando el menú…</string>
+    <string name="offline">Sin conexión con el servidor.</string>
+    <string name="server_title">Servidor</string>
+    <string name="server_message">Dirección del servidor. Ejemplo: https://pantalla.renace.tech</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="server_invalid">La dirección debe empezar por http:// o https://</string>
+    <string name="stage_description">Contenido del menú</string>
+</resources>

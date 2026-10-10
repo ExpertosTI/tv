@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RENACE Pantalla</title>
+  <meta name="description" content="Menú en la TV para cafeterías y negocios. Entras con un código y publicas JPG, GIF o video a pantalla completa.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand"><img src="/mark.svg" width="40" height="40" alt=""><span>RENACE Pantalla</span></div>
+      <h1>Tu menú, en la TV.</h1>
+      <p class="lede">Sube el JPG, el GIF o el video. La pantalla del negocio lo muestra a pantalla completa. Cada local tiene su espacio y la TV entra con un código.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#cuenta">Crear negocio</a>
+        <a class="btn ghost" href="#cuenta">Ya tengo cuenta</a>
+      </div>
+    </div>
+  </header>
+  <main id="contenido">
+    <div class="section">
+      <div class="steps">
+        <article class="card"><p class="step-no">01</p><h2>Abre la app en la TV</h2><p class="muted">Aparece un código de 6 caracteres. No hace falta escribir correo con el control.</p></article>
+        <article class="card"><p class="step-no">02</p><h2>Vincúlala desde aquí</h2><p class="muted">Entras al panel del negocio y escribes el código que está en la pantalla.</p></article>
+        <article class="card"><p class="step-no">03</p><h2>Publica el menú</h2><p class="muted">Ordenas imágenes y videos, eliges cuántos segundos se ve cada uno y si llena la pantalla.</p></article>
+      </div>
+    </div>
+    <div class="section" id="cuenta">
+      <div class="auth-grid">
+        <form class="card" id="login-form">
+          <p class="step-no">Entrar</p>
+          <h2>Panel del negocio</h2>
+          <label>Correo<input name="email" type="email" autocomplete="username" required></label>
+          <label>Contraseña<input name="password" type="password" autocomplete="current-password" required minlength="8"></label>
+          <button class="btn primary" type="submit">Entrar</button>
+          <p class="form-error" id="login-error" role="alert"></p>
+        </form>
+        <form class="card" id="register-form">
+          <p class="step-no">Nuevo</p>
+          <h2>Crear negocio</h2>
+          <label>Nombre del negocio<input name="businessName" required maxlength="80" autocomplete="organization"></label>
+          <label>Tu nombre<input name="ownerName" required maxlength="80" autocomplete="name"></label>
+          <label>Correo<input name="email" type="email" autocomplete="email" required></label>
+          <label>Contraseña<input name="password" type="password" autocomplete="new-password" required minlength="8"></label>
+          <button class="btn primary" type="submit">Crear negocio</button>
+          <p class="form-error" id="register-error" role="alert"></p>
+        </form>
+      </div>
+    </div>
+  </main>
+  <footer class="site-foot hero-inner">
+    <a href="/privacidad">Privacidad</a>
+    · <a href="/tv">Probar reproductor</a>
+  </footer>
+  <script src="/home.js"></script>
+</body>
+</html>

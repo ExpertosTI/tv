@@ -1,0 +1,44 @@
+Nombre
+RENACE Pantalla
+
+Paquete
+tech.renace.pantalla
+
+Descripción breve
+Menú del negocio en la TV. Entras con un código.
+
+Descripción
+RENACE Pantalla pone el menú de una cafetería, un restaurante o cualquier negocio en la televisión.
+
+Abres la app en la TV y aparece un código. En el panel web escribes ese código y la pantalla queda de ese negocio. Subes JPG, GIF o video, armas la lista y eliges si la imagen llena la pantalla o se ve completa, y cuántos segundos dura.
+
+Cada negocio tiene su propio espacio. Puedes tener varias TV y cambiar el contenido desde el panel, sin volver a la pantalla.
+
+La app guarda una copia de los archivos en la TV para seguir mostrando el menú si la red falla un momento.
+
+Categoría
+Empresas
+
+Política de privacidad
+https://pantalla.renace.tech/privacidad
+(o la URL pública de tu servidor, ruta /privacidad)
+
+Piezas
+- Icono 512: play-store/icon-512.png
+- Banner de Android TV 320×180: play-store/tv-banner-320x180.png
+- Gráfico destacado 1024×500: play-store/feature-1024x500.png
+- Paquete para subir: android/app/build/outputs/bundle/release/app-release.aab
+
+Ficha de seguridad de datos
+- La app no pide ubicación, contactos, fotos de la cámara ni micrófono.
+- Envía al servidor del negocio un identificador de la TV y descarga el menú que ese negocio publicó.
+- No hay anuncios ni analítica de terceros.
+- El contenido se guarda en el servidor que opera el negocio y una copia en la TV.
+
+Antes de enviar a revisión
+1. Crea la app en Play Console con el paquete tech.renace.pantalla.
+2. Sube el AAB firmado a una pista de prueba interna.
+3. Declara que es una app de Android TV. El manifiesto trae Leanback y el banner.
+4. Publica la política de privacidad en una URL https.
+5. Completa el cuestionario de clasificación de contenido: el público no sube contenido; lo publica la cuenta del negocio en sus propias pantallas.
+6. Guarda android/keystore/ y android/key.properties fuera del computador. Sin esa clave no se puede publicar una actualización.

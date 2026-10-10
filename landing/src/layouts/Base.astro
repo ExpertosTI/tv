@@ -1,0 +1,88 @@
+---
+import '../styles/global.css';
+import '@fontsource/manrope/400.css';
+import '@fontsource/manrope/600.css';
+import '@phosphor-icons/web/regular';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <link rel="canonical" href={canonical.href}>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:type" content="website">
+  <meta property="og:url" content={canonical.href}>
+  <meta property="og:image" content={new URL('/og.png', Astro.site).href}>
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="orb orb-c"></div>
+    <div class="arrow-field"></div>
+  </div>
+  <Nav />
+  <slot />
+  <Footer />
+  <script>
+    const nodes = document.querySelectorAll('[data-reveal]');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      nodes.forEach((node) => node.classList.add('is-in'));
+    } else {
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add('is-in');
+          observer.unobserve(entry.target);
+        }
+      }, { threshold: 0.2 });
+      nodes.forEach((node) => observer.observe(node));
+    }
+
+    const tagline = document.querySelector('[data-tagline]');
+    if (tagline) {
+      const lines = [...tagline.querySelectorAll('[data-line]')];
+      for (const line of lines) {
+        const text = line.textContent || '';
+        line.textContent = '';
+        for (const word of text.split(' ').filter(Boolean)) {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = word;
+          line.append(span, ' ');
+        }
+      }
+      const words = [...tagline.querySelectorAll('.word')];
+      if (reduce) {
+        words.forEach((word) => word.classList.add('on'));
+      } else {
+        const wordObserver = new IntersectionObserver((entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          words.forEach((word, index) => {
+            window.setTimeout(() => word.classList.add('on'), index * 90);
+          });
+          wordObserver.disconnect();
+        }, { rootMargin: '0px 0px -35% 0px', threshold: 0.2 });
+        wordObserver.observe(tagline);
+      }
+    }
+  </script>
+</body>
+</html>
