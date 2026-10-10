@@ -6,6 +6,7 @@ import express from 'express';
 import multer from 'multer';
 import { compressVideo } from './compress.js';
 import { many, one, openDatabase } from './db.js';
+import { menuFromOdoo, safeImageUrl } from './odoo.js';
 import { publicTemplates, sanitizeContent, templateById } from './templates.js';
 
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public');
@@ -310,19 +311,26 @@ export function createServer(options = {}) {
     return `${externalBase(req)}/media/${mediaId}?exp=${exp}&screen=${screen.id}&sig=${sig}`;
   }
 
+  function mediaUrl(req, mediaId, screen, exp) {
+    if (!mediaId) return '';
+    return screen ? signedMedia(req, mediaId, screen, exp) : `/api/media/${mediaId}/raw`;
+  }
+
+  function decorateItem(req, item, screen, exp) {
+    return { ...item, imageUrl: mediaUrl(req, item.imageMediaId, screen, exp) };
+  }
+
   function decorateContent(req, content, tenant, screen) {
     const next = { ...content };
     const exp = Date.now() + 12 * 60 * 60 * 1000;
-    if (next.backgroundMediaId) {
-      next.backgroundUrl = screen
-        ? signedMedia(req, next.backgroundMediaId, screen, exp)
-        : `/api/media/${next.backgroundMediaId}/raw`;
-    }
-    if (tenant?.logo_media_id) {
-      next.logoUrl = screen
-        ? signedMedia(req, tenant.logo_media_id, screen, exp)
-        : `/api/media/${tenant.logo_media_id}/raw`;
-    }
+    if (next.backgroundMediaId) next.backgroundUrl = mediaUrl(req, next.backgroundMediaId, screen, exp);
+    if (tenant?.logo_media_id) next.logoUrl = mediaUrl(req, tenant.logo_media_id, screen, exp);
+    next.items = (next.items || []).map((item) => decorateItem(req, item, screen, exp));
+    next.categories = (next.categories || []).map((category) => ({
+      ...category,
+      items: (category.items || []).map((item) => decorateItem(req, item, screen, exp)),
+    }));
+    next.interludeUrls = (next.interludeMediaIds || []).map((id) => mediaUrl(req, id, screen, exp)).filter(Boolean);
     next.accent = colorOr(tenant?.color_ink, '#8FD3FF');
     next.navy = colorOr(tenant?.color_navy, '#00204E');
     next.action = colorOr(tenant?.color_accent, '#0087FF');
@@ -339,7 +347,15 @@ export function createServer(options = {}) {
       colorInk: colorOr(tenant.color_ink, '#8FD3FF').toLowerCase(),
       logoMediaId: tenant.logo_media_id || '',
       logoUrl: tenant.logo_media_id ? `/api/media/${tenant.logo_media_id}/raw` : '',
+      odooToken: tenant.odoo_token || '',
     };
+  }
+
+  function ensureOdooToken(tenant) {
+    if (tenant.odoo_token) return tenant;
+    const token = crypto.randomBytes(24).toString('hex');
+    db.prepare('UPDATE tenants SET odoo_token = ? WHERE id = ?').run(token, tenant.id);
+    return tenantRow(tenant.id);
   }
 
   function publish(tenantId) {
@@ -539,7 +555,7 @@ export function createServer(options = {}) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'same-origin');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self'; media-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' https://accounts.google.com; script-src 'self' https://accounts.google.com; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
     next();
   });
 
@@ -581,6 +597,41 @@ export function createServer(options = {}) {
     res.status(201).json({ businessName, name: ownerName, email });
   }));
 
+  app.get('/api/auth/config', (_req, res) => {
+    res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || '' });
+  });
+
+  app.post('/api/auth/google', wrap(async (req, res) => {
+    const clientId = String(process.env.GOOGLE_CLIENT_ID || '');
+    if (!clientId) fail(503, 'El acceso con Google todavía no está activado en este servidor.');
+    const credential = String(req.body.credential || '');
+    if (credential.length < 20 || credential.length > 4000) fail(400, 'Google no envió una credencial válida.');
+    const info = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+    const profile = await info.json().catch(() => ({}));
+    if (!info.ok || profile.aud !== clientId) fail(401, 'Google no confirmó esta cuenta.');
+    if (String(profile.email_verified) !== 'true') fail(401, 'Ese correo de Google no está verificado.');
+    const email = cleanText(profile.email, 120).toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail(400, 'Google no entregó un correo válido.');
+    let user = one(db.prepare('SELECT * FROM users WHERE email = ?'), email);
+    if (!user) {
+      if (!allowRegister) fail(403, 'El registro está cerrado en este servidor.');
+      const businessName = cleanText(profile.name, 80) || email.split('@')[0];
+      const tenantId = crypto.randomUUID();
+      const userId = crypto.randomUUID();
+      const created = nowIso();
+      db.prepare('INSERT INTO tenants (id, name, created_at) VALUES (?, ?, ?)').run(tenantId, businessName, created);
+      db.prepare(`
+        INSERT INTO users (id, tenant_id, name, email, password_hash, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(userId, tenantId, businessName, email, hashPassword(crypto.randomBytes(24).toString('hex')), created);
+      user = one(db.prepare('SELECT * FROM users WHERE id = ?'), userId);
+    }
+    const sessionId = crypto.randomBytes(32).toString('hex');
+    db.prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)').run(sessionId, user.id, Date.now() + 30 * 24 * 60 * 60 * 1000);
+    cookie(res, req, 'sid', sessionId, 30 * 24 * 60 * 60);
+    res.json({ ok: true });
+  }));
+
   app.post('/api/auth/login', wrap(async (req, res) => {
     if (limited(`login:${req.ip}`, 20, 15 * 60 * 1000)) fail(429, 'Demasiados intentos. Espera unos minutos.');
     const email = cleanText(req.body.email, 120).toLowerCase();
@@ -611,8 +662,7 @@ export function createServer(options = {}) {
   });
 
   app.get('/api/brand', requireUser, (req, res) => {
-    const tenant = tenantRow(req.user.tenant_id);
-    res.json(publicBrand(tenant));
+    res.json(publicBrand(ensureOdooToken(tenantRow(req.user.tenant_id))));
   });
 
   app.patch('/api/brand', requireUser, wrap(async (req, res) => {
@@ -638,7 +688,93 @@ export function createServer(options = {}) {
     `).run(tagline, colorNavy, colorAccent, colorInk, logoId, tenant.id);
     const lists = many(db.prepare('SELECT id FROM playlists WHERE tenant_id = ?'), tenant.id);
     for (const list of lists) touchPlaylist(list.id);
-    res.json(publicBrand(tenantRow(tenant.id)));
+    res.json(publicBrand(ensureOdooToken(tenantRow(tenant.id))));
+  }));
+
+  async function storeRemoteImage(tenantId, imageUrl) {
+    const url = safeImageUrl(imageUrl);
+    if (!url) return '';
+    let response;
+    try {
+      response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(8000) });
+    } catch {
+      return '';
+    }
+    if (!response.ok) return '';
+    const type = String(response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    const spec = MIME[type];
+    if (!spec || spec.kind !== 'image') return '';
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (!bytes.length || bytes.length > spec.max || !sniff(bytes.subarray(0, 16), type)) return '';
+    const id = crypto.randomUUID();
+    const filename = `${id}${spec.ext}`;
+    const dir = path.join(dataDir, 'uploads', tenantId);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, filename), bytes);
+    db.prepare(`
+      INSERT INTO media (id, tenant_id, original_name, mime, kind, bytes, storage_name, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, tenantId, 'odoo', type, spec.kind, bytes.length, filename, nowIso());
+    return id;
+  }
+
+  function placeCarta(tenantId, boardId) {
+    let playlist = one(db.prepare(`SELECT * FROM playlists WHERE tenant_id = ? AND name = ?`), tenantId, 'Carta');
+    const created = nowIso();
+    if (!playlist) {
+      const id = crypto.randomUUID();
+      db.prepare(`
+        INSERT INTO playlists (id, tenant_id, name, fit, image_seconds, sound, updated_at, created_at)
+        VALUES (?, ?, 'Carta', 'cover', 12, 0, ?, ?)
+      `).run(id, tenantId, created, created);
+      playlist = one(db.prepare('SELECT * FROM playlists WHERE id = ?'), id);
+    }
+    const present = one(db.prepare('SELECT id FROM playlist_items WHERE playlist_id = ? AND board_id = ?'), playlist.id, boardId);
+    if (!present) {
+      const position = one(db.prepare('SELECT COALESCE(MAX(position), 0) AS pos FROM playlist_items WHERE playlist_id = ?'), playlist.id);
+      db.prepare(`
+        INSERT INTO playlist_items (id, playlist_id, board_id, position, duration_seconds, created_at)
+        VALUES (?, ?, ?, ?, 45, ?)
+      `).run(crypto.randomUUID(), playlist.id, boardId, Number(position.pos) + 1, created);
+    }
+    db.prepare('UPDATE screens SET playlist_id = ? WHERE tenant_id = ? AND playlist_id IS NULL').run(playlist.id, tenantId);
+    touchPlaylist(playlist.id);
+  }
+
+  app.post('/api/odoo/menu', wrap(async (req, res) => {
+    if (limited(`odoo:${req.ip}`, 30, 10 * 60 * 1000)) fail(429, 'Demasiadas publicaciones. Espera un momento.');
+    const header = String(req.get('authorization') || '');
+    const token = (header.toLowerCase().startsWith('bearer ') ? header.slice(7) : String(req.get('x-odoo-token') || '')).trim();
+    if (!/^[a-f0-9]{48}$/.test(token)) fail(401, 'Falta la clave de Odoo.');
+    const tenant = one(db.prepare('SELECT * FROM tenants WHERE odoo_token = ?'), token);
+    if (!tenant) fail(401, 'La clave de Odoo no coincide.');
+    const draft = menuFromOdoo(req.body);
+    if (!draft) fail(400, 'La carta necesita categorías con productos.');
+    for (const category of draft.categories) {
+      for (const item of category.items) {
+        item.imageMediaId = item.imageUrl ? await storeRemoteImage(tenant.id, item.imageUrl) : '';
+        delete item.imageUrl;
+      }
+    }
+    const content = sanitizeContent('carta', draft);
+    const name = cleanText(draft.headline, 80) || 'Carta';
+    const existing = one(db.prepare(`SELECT * FROM boards WHERE tenant_id = ? AND template_id = 'carta' ORDER BY updated_at DESC`), tenant.id);
+    const updated = nowIso();
+    let boardId = existing?.id;
+    if (existing) {
+      db.prepare('UPDATE boards SET name = ?, content_json = ?, updated_at = ? WHERE id = ?')
+        .run(name, JSON.stringify(content), updated, existing.id);
+      touchBoardsPlaylists(existing.id);
+    } else {
+      boardId = crypto.randomUUID();
+      db.prepare(`
+        INSERT INTO boards (id, tenant_id, template_id, name, content_json, updated_at, created_at)
+        VALUES (?, ?, 'carta', ?, ?, ?, ?)
+      `).run(boardId, tenant.id, name, JSON.stringify(content), updated, updated);
+    }
+    placeCarta(tenant.id, boardId);
+    const board = one(db.prepare('SELECT * FROM boards WHERE id = ?'), boardId);
+    res.json({ ok: true, board: publicBoard(board), playlist: 'Carta' });
   }));
 
   app.get('/api/media', requireUser, (req, res) => {

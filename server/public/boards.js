@@ -89,7 +89,112 @@
         <div class="marquee"><div class="marquee-track">${tape}</div></div>`;
       applyScene(root, content);
     },
+    carta(root, content) {
+      const categories = (content.categories || []).filter((category) => category.items?.length);
+      const groups = categories.length ? categories : [{ name: content.subtitle || 'Carta', items: rows(content) }];
+      if (content.presentation === 'uno') {
+        uno(root, content, groups);
+        return;
+      }
+      let index = 0;
+      let timer = 0;
+      function paint() {
+        const category = groups[index % groups.length] || { name: '', items: [] };
+        root.innerHTML = `
+          <header class="carta-top">
+            ${logo(content)}
+            <div>
+              <p class="carta-kicker">${esc(content.headline)}</p>
+              <h1>${esc(category.name)}</h1>
+            </div>
+            <div class="carta-chips">${groups.map((group, chip) => `<span class="${chip === index % groups.length ? 'is-on' : ''}">${esc(group.name)}</span>`).join('')}</div>
+          </header>
+          <div class="carta-grid">
+            ${category.items.map((item) => dishCard(item)).join('')}
+          </div>`;
+        applyScene(root, content);
+      }
+      paint();
+      if (groups.length > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        timer = window.setInterval(() => { index += 1; paint(); }, 7000);
+      }
+      root._stop = () => window.clearInterval(timer);
+    },
   };
+
+  function dishCard(item) {
+    const src = item.imageUrl || (item.imageMediaId ? `/api/media/${item.imageMediaId}/raw` : '');
+    const photo = src
+      ? `<img class="dish-photo" src="${esc(src)}" alt="">`
+      : `<div class="dish-fallback">${esc((item.name || '·').slice(0, 1))}</div>`;
+    return `<article class="dish">${photo}<div><strong>${esc(item.name)}</strong><small>${esc(item.note)}</small><b>${esc(item.price)}</b></div></article>`;
+  }
+
+  function uno(root, content, groups) {
+    const products = groups.flatMap((group) => group.items.map((item) => ({ ...item, category: group.name })));
+    const breaks = content.interludeUrls || [];
+    let index = 0;
+    let stopped = false;
+    root._stop = () => { stopped = true; };
+    async function cycle() {
+      while (!stopped && products.length) {
+        const item = products[index % products.length];
+        const src = item.imageUrl || (item.imageMediaId ? `/api/media/${item.imageMediaId}/raw` : '');
+        root.innerHTML = `
+          <section class="uno">
+            ${src ? `<img class="uno-photo" src="${esc(src)}" alt="">` : `<div class="uno-photo dish-fallback">${esc((item.name || '·').slice(0, 1))}</div>`}
+            <div class="uno-copy">
+              <p class="carta-kicker">${esc(item.category || content.headline)}</p>
+              <h1 class="uno-title"></h1>
+              <p class="uno-note"></p>
+              <b class="uno-price"></b>
+            </div>
+          </section>`;
+        applyScene(root, content);
+        await typeInto(root.querySelector('.uno-title'), item.name || '', () => stopped);
+        await typeInto(root.querySelector('.uno-note'), item.note || '', () => stopped);
+        const price = root.querySelector('.uno-price');
+        if (price) price.textContent = item.price || '';
+        await waitBoard(2600, () => stopped);
+        const pause = breaks.length ? breaks[index % breaks.length] : '';
+        index += 1;
+        if (!pause || stopped) continue;
+        root.innerHTML = `<img class="uno-break" src="${esc(pause)}" alt="">`;
+        await waitBoard(4000, () => stopped);
+      }
+    }
+    cycle();
+  }
+
+  function typeInto(node, text, cancelled) {
+    return new Promise((resolve) => {
+      if (!node) { resolve(); return; }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        node.textContent = text;
+        resolve();
+        return;
+      }
+      let count = 0;
+      const timer = window.setInterval(() => {
+        if (cancelled()) { window.clearInterval(timer); resolve(); return; }
+        count += 1;
+        node.textContent = text.slice(0, count);
+        if (count >= text.length) { window.clearInterval(timer); resolve(); }
+      }, 42);
+    });
+  }
+
+  function waitBoard(ms, cancelled) {
+    return new Promise((resolve) => {
+      const started = Date.now();
+      const timer = window.setInterval(() => {
+        if (cancelled() || Date.now() - started >= ms) {
+          window.clearInterval(timer);
+          resolve();
+        }
+      }, 120);
+    });
+  }
 
   function mount(root, templateId, content) {
     if (typeof root._stop === 'function') root._stop();

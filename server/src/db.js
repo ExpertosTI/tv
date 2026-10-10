@@ -135,6 +135,7 @@ function ensureBrand(db) {
   ensureColumn(db, 'tenants', 'color_navy', "color_navy TEXT NOT NULL DEFAULT '#00204E'");
   ensureColumn(db, 'tenants', 'color_accent', "color_accent TEXT NOT NULL DEFAULT '#0087FF'");
   ensureColumn(db, 'tenants', 'color_ink', "color_ink TEXT NOT NULL DEFAULT '#8FD3FF'");
+  ensureColumn(db, 'tenants', 'odoo_token', 'odoo_token TEXT');
 }
 
 export function openDatabase(dataDir) {

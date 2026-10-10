@@ -67,7 +67,13 @@ function renderBrand() {
       <button class="btn primary" type="submit">Guardar perfil</button>
       <p class="form-error" id="brand-status" role="status"></p>
     </form>
-    <p class="muted">Sube el logo en Archivos. Las fotos de una lista se ven como diapositivas. Los videos se comprimen al subirlos.</p>`;
+    <p class="muted">Sube el logo en Archivos. Las fotos de una lista se ven como diapositivas. Los videos se comprimen al subirlos.</p>
+    <article class="card">
+      <h3>Publicar desde Odoo</h3>
+      <p class="muted">El módulo envía la carta a esta dirección con la clave. La TV toma categorías, precios y fotos.</p>
+      <p><code>${esc(location.origin)}/api/odoo/menu</code></p>
+      <p><code>${esc(brand.odooToken || '')}</code></p>
+    </article>`;
   document.getElementById('brand-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -391,6 +397,8 @@ function readMenuForm() {
     price: row.querySelector('[data-price]').value,
     note: row.querySelector('[data-note]').value,
     badge: row.querySelector('[data-badge]').value,
+    category: row.querySelector('[data-category]')?.value || '',
+    imageMediaId: row.querySelector('[data-photo]')?.value || '',
   }));
   return {
     name: document.getElementById('menu-name').value,
@@ -399,6 +407,8 @@ function readMenuForm() {
       subtitle: document.getElementById('menu-subtitle').value,
       items,
       backgroundMediaId: document.getElementById('menu-bg')?.value || '',
+      presentation: document.getElementById('menu-mode')?.value || 'rejilla',
+      interludeMediaIds: [...document.querySelectorAll('[data-interlude]:checked')].map((input) => input.value),
     },
   };
 }
@@ -477,6 +487,16 @@ function renderMenuEditor(board) {
           ${state.media.filter((file) => file.kind === 'image').map((file) => `<option value="${esc(file.id)}" ${file.id === board.content.backgroundMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
         </select>
       </label>
+      <label>Cómo entra
+        <select id="menu-mode">
+          <option value="rejilla" ${board.content.presentation === 'uno' ? '' : 'selected'}>Carta, por categorías</option>
+          <option value="uno" ${board.content.presentation === 'uno' ? 'selected' : ''}>Uno a uno, se escribe</option>
+        </select>
+      </label>
+      <fieldset class="interludes">
+        <legend>Fotos entre platos</legend>
+        ${state.media.filter((file) => file.kind === 'image').map((file) => `<label class="check"><input data-interlude type="checkbox" value="${esc(file.id)}" ${(board.content.interludeMediaIds || []).includes(file.id) ? 'checked' : ''}>${esc(file.name)}</label>`).join('') || '<p class="muted">Sube fotos en Archivos para intercalarlas.</p>'}
+      </fieldset>
       <div id="menu-rows">
         ${items.map((item) => menuRow(item)).join('')}
       </div>
@@ -510,10 +530,18 @@ function renderMenuEditor(board) {
 }
 
 function menuRow(item) {
+  const photos = state.media.filter((file) => file.kind === 'image');
   return `<div class="menu-row" data-row>
     <label>Producto<input data-name maxlength="48" value="${esc(item.name)}"></label>
     <label>Precio<input class="price-input" data-price maxlength="18" value="${esc(item.price)}"></label>
     <label>Detalle<input data-note maxlength="48" value="${esc(item.note)}"></label>
+    <label>Categoría<input data-category maxlength="32" value="${esc(item.category || '')}" placeholder="Entradas"></label>
+    <label>Foto
+      <select data-photo>
+        <option value="">Sin foto</option>
+        ${photos.map((file) => `<option value="${esc(file.id)}" ${file.id === item.imageMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
+      </select>
+    </label>
     <label>Etiqueta<input data-badge maxlength="16" value="${esc(item.badge)}" placeholder="Nuevo">
       <button class="btn" type="button" data-drop>Quitar</button>
     </label>

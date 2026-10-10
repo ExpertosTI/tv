@@ -189,6 +189,34 @@
   100% { transform: translateX(120%); }
 }
 
+.carta {
+  background: #f4f1ea;
+  color: #1b140d;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 3.2vh 3vw;
+}
+.carta-top { display: flex; align-items: end; gap: 2vw; }
+.carta-top h1 { margin: 0; font-size: clamp(40px, 4.6vw, 72px); line-height: 0.95; }
+.carta-kicker { margin: 0 0 0.4vh; letter-spacing: 0.14em; text-transform: uppercase; color: #0060bf; font-weight: 700; }
+.carta-chips { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; justify-content: end; }
+.carta-chips span { padding: 8px 14px; border-radius: 999px; background: rgba(0, 32, 78, 0.08); font-weight: 700; }
+.carta-chips .is-on { background: #00204e; color: white; }
+.carta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6vh 1.4vw; align-content: center; }
+.dish { display: grid; grid-template-rows: 1fr auto; min-height: 28vh; background: white; border-radius: 0 24px 0 0; overflow: hidden; }
+.dish-photo, .dish-fallback { width: 100%; height: 22vh; object-fit: cover; background: #00204e; }
+.dish-fallback { display: grid; place-items: center; color: white; font-size: 48px; font-weight: 700; }
+.dish div { padding: 1.2vh 1vw 1.4vh; }
+.dish strong { display: block; font-size: clamp(20px, 2vw, 32px); }
+.dish small { display: block; color: #5c6b80; }
+.dish b { display: inline-block; margin-top: 0.6vh; color: #0060bf; font-size: clamp(22px, 2.2vw, 36px); }
+.uno { position: absolute; inset: 0; display: grid; }
+.uno-photo, .uno-break { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.uno-copy { position: relative; z-index: 1; align-self: end; margin: 6vh 5vw; max-width: 18ch; color: white; text-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.uno-copy h1 { margin: 0; font-size: clamp(56px, 7vw, 120px); line-height: 0.92; min-height: 1.1em; }
+.uno-note { margin: 1vh 0; font-size: clamp(20px, 2vw, 32px); min-height: 1.2em; }
+.uno-price { font-size: clamp(32px, 4vw, 64px); }
+
 @media (prefers-reduced-motion: reduce) {
   .aurora-wash, .aurora-row, .feature-card, .marquee-track, .sheen { animation: none; }
 }
