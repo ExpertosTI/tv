@@ -256,7 +256,7 @@ class MainActivity : AppCompatActivity() {
             if (shown.url.isNotBlank()) boardView.loadUrl(shown.url)
             val seconds = (slide.durationSeconds ?: 45).coerceIn(5, 600)
             var elapsed = 0
-            while (elapsed < seconds * 1000 && isActive) {
+            while (elapsed < seconds * 1000) {
                 delay(250)
                 elapsed += 250
                 val live = pending?.items?.find { it.mediaId == shown.mediaId && it.kind == "board" }
