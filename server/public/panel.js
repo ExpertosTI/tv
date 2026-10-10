@@ -1,5 +1,5 @@
 const main = document.getElementById('main');
-const state = { tab: 'screens', media: [], playlists: [], screens: [], boards: [], templates: [], brand: null, selected: null, boardId: null, me: null };
+const state = { tab: 'screens', media: [], playlists: [], screens: [], boards: [], templates: [], brand: null, selected: null, boardId: null, me: null, pickTemplate: 'aurora' };
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -491,63 +491,84 @@ function withBrand(content) {
   };
 }
 
-function paintPreview() {
-  const frame = document.getElementById('menu-preview');
-  const board = state.boards.find((item) => item.id === state.boardId);
-  if (!frame || !board || !document.getElementById('menu-name')) return;
-  const draft = readMenuForm();
-  window.RenaceBoards.mount(frame, board.templateId, withBrand(draft.content));
+function mediaOf(id) {
+  return state.media.find((file) => file.id === id) || null;
 }
 
-function previewTemplate() {
+function dressContent(content) {
+  const next = withBrand(content);
+  const background = mediaOf(next.backgroundMediaId);
+  if (background) {
+    next.backgroundUrl = background.url;
+    next.backgroundKind = background.kind === 'video' ? 'video' : 'image';
+  }
+  next.items = (next.items || []).map((item) => {
+    const photo = mediaOf(item.imageMediaId);
+    return photo ? { ...item, imageUrl: photo.url } : item;
+  });
+  return next;
+}
+
+function paintPreview() {
   const frame = document.getElementById('menu-preview');
-  const select = document.querySelector('#new-menu select');
-  if (!frame || !select) return;
-  const found = state.templates.find((item) => item.id === select.value);
+  if (!frame) return;
+  const templateId = document.getElementById('menu-template')?.value || state.pickTemplate;
+  if (document.getElementById('menu-name')) {
+    window.RenaceBoards.mount(frame, templateId, dressContent(readMenuForm().content));
+    return;
+  }
+  const found = state.templates.find((item) => item.id === templateId);
   if (!found?.defaults) return;
   window.RenaceBoards.mount(frame, found.id, withBrand({ ...found.defaults, font: 'sans', presentation: 'rejilla' }));
+}
+
+function markTemplate(id) {
+  state.pickTemplate = id;
+  for (const button of document.querySelectorAll('[data-template]')) {
+    button.classList.toggle('is-on', button.dataset.template === id);
+    button.setAttribute('aria-pressed', button.dataset.template === id ? 'true' : 'false');
+  }
+  const select = document.getElementById('menu-template');
+  if (select) select.value = id;
+  const blurb = document.getElementById('template-blurb');
+  const found = state.templates.find((item) => item.id === id);
+  if (blurb) blurb.textContent = found?.blurb || '';
+  paintPreview();
 }
 
 function renderMenus() {
   const selected = state.boards.find((board) => board.id === state.boardId) || state.boards[0] || null;
   state.boardId = selected?.id || null;
+  state.pickTemplate = selected?.templateId || state.pickTemplate || state.templates[0]?.id || 'aurora';
   main.innerHTML = `
-    <div class="panel-head"><div><p class="step-no">Menús</p><h2>Precios en vivo</h2><p class="muted">Elige el modo y míralo arriba. El menú queda encima de la foto o del video, en TV, tablet y teléfono.</p></div></div>
+    <div class="panel-head"><div><p class="step-no">Menús</p><h2>Precios en vivo</h2><p class="muted">Elige el modo y míralo en la vista previa. El menú queda encima de la foto o del video.</p></div></div>
+    <p class="step-no">Vista previa</p>
     <div class="tv-frame tv-hero"><div id="menu-preview"></div></div>
+    <div class="template-rail" role="listbox" aria-label="Plantillas">
+      ${state.templates.map((item) => `<button class="chip ${item.id === state.pickTemplate ? 'is-on' : ''}" type="button" data-template="${esc(item.id)}" aria-pressed="${item.id === state.pickTemplate}">${esc(item.name)}</button>`).join('')}
+    </div>
+    <p class="muted" id="template-blurb"></p>
     <div class="split">
       <div>
         <form id="new-menu" class="card template-pick">
-          <label>Plantilla
-            <select name="templateId">
-              ${state.templates.map((item) => `<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('')}
-            </select>
-          </label>
-          <p class="muted" id="template-blurb"></p>
+          <p class="muted">La plantilla marcada arriba es la que se crea.</p>
           <label>Nombre<input name="name" maxlength="80" placeholder="Menú de barra" required></label>
           <button class="btn primary" type="submit">Crear menú</button>
           <p class="form-error" id="menu-error" role="alert"></p>
         </form>
-        <div style="height:12px"></div>
-        ${state.boards.map((board) => `<button class="btn choice" type="button" data-board="${esc(board.id)}" aria-pressed="${board.id === state.boardId}">${esc(board.name)}</button>`).join('') || '<p class="muted">Aún no hay menús.</p>'}
+        <div class="board-list">
+          ${state.boards.map((board) => `<button class="btn choice" type="button" data-board="${esc(board.id)}" aria-pressed="${board.id === state.boardId}">${esc(board.name)}</button>`).join('') || '<p class="muted">Aún no hay menús.</p>'}
+        </div>
       </div>
       <div id="menu-editor"></div>
     </div>`;
-  const select = document.querySelector('#new-menu select');
-  const blurb = document.getElementById('template-blurb');
-  const showBlurb = () => {
-    const found = state.templates.find((item) => item.id === select.value);
-    blurb.textContent = found?.blurb || '';
-    previewTemplate();
-  };
-  select.addEventListener('change', showBlurb);
-  showBlurb();
   document.getElementById('new-menu').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     try {
       const created = await api('/api/boards', {
         method: 'POST',
-        body: JSON.stringify({ templateId: form.get('templateId'), name: form.get('name') }),
+        body: JSON.stringify({ templateId: state.pickTemplate, name: form.get('name') }),
       });
       state.boardId = created.id;
       await refresh();
@@ -555,6 +576,9 @@ function renderMenus() {
       document.getElementById('menu-error').textContent = err.message;
     }
   });
+  for (const button of main.querySelectorAll('[data-template]')) {
+    button.addEventListener('click', () => markTemplate(button.dataset.template));
+  }
   for (const button of main.querySelectorAll('[data-board]')) {
     button.addEventListener('click', () => { state.boardId = button.dataset.board; render(); });
   }
@@ -566,15 +590,26 @@ function renderMenuEditor(board) {
   const items = board.content.items.length ? board.content.items : [emptyItem()];
   editor.innerHTML = `
     <article class="card menu-editor">
+      <label>Plantilla de este menú
+        <select id="menu-template">
+          ${state.templates.map((item) => `<option value="${esc(item.id)}" ${item.id === (state.pickTemplate || board.templateId) ? 'selected' : ''}>${esc(item.name)}</option>`).join('')}
+        </select>
+      </label>
       <label>Nombre del menú<input id="menu-name" maxlength="80" value="${esc(board.name)}"></label>
       <label>Título en pantalla<input id="menu-headline" maxlength="60" value="${esc(board.content.headline)}"></label>
       <label>Subtítulo<input id="menu-subtitle" maxlength="90" value="${esc(board.content.subtitle)}"></label>
-      <label>Fondo
-        <select id="menu-bg">
-          <option value="">Patrón de la marca</option>
-          ${state.media.filter((file) => file.kind === 'image' || file.kind === 'video').map((file) => `<option value="${esc(file.id)}" ${file.id === board.content.backgroundMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
-        </select>
-      </label>
+      <div class="upload-line">
+        <label>Fondo subido
+          <select id="menu-bg">
+            <option value="">Patrón de la marca</option>
+            ${state.media.filter((file) => file.kind === 'image' || file.kind === 'video').map((file) => `<option value="${esc(file.id)}" ${file.id === board.content.backgroundMediaId ? 'selected' : ''}>${esc(file.name)} · ${kindLabel(file.kind)}</option>`).join('')}
+          </select>
+        </label>
+        <label class="btn file-btn">Subir foto o video
+          <input id="menu-upload" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" hidden>
+        </label>
+      </div>
+      <p class="muted">El video se comprime al subirlo. El enlace es otra forma de fondo, sin guardar el archivo.</p>
       <label>Video por enlace
         <input id="menu-video" type="url" inputmode="url" maxlength="400" placeholder="https://www.youtube.com/watch?v=" value="${esc(board.content.backgroundVideoUrl || '')}">
       </label>
@@ -603,8 +638,44 @@ function renderMenuEditor(board) {
       </div>
       <p class="muted" id="menu-status">Los cambios se ven en la vista previa al escribir. Guarda para que la TV los tome.</p>
     </article>`;
-  paintPreview();
+  markTemplate(state.pickTemplate || board.templateId);
   editor.addEventListener('input', paintPreview);
+  editor.addEventListener('change', async (event) => {
+    if (event.target.id === 'menu-template') {
+      markTemplate(event.target.value);
+      return;
+    }
+    const upload = event.target.closest('[data-upload-photo], #menu-upload');
+    if (!upload?.files?.[0]) return;
+    const status = document.getElementById('menu-status');
+    status.textContent = upload.id === 'menu-upload' && upload.files[0].type.startsWith('video')
+      ? 'Subiendo y comprimiendo el video…'
+      : 'Subiendo la foto…';
+    try {
+      const saved = await uploadOne(upload.files[0]);
+      if (upload.id === 'menu-upload') {
+        const select = document.getElementById('menu-bg');
+        select.insertAdjacentHTML('beforeend', `<option value="${esc(saved.id)}">${esc(saved.name)} · ${kindLabel(saved.kind)}</option>`);
+        select.value = saved.id;
+        if (saved.kind === 'video') document.getElementById('menu-video').value = '';
+      } else {
+        const row = upload.closest('[data-row]');
+        const select = row.querySelector('[data-photo]');
+        select.insertAdjacentHTML('beforeend', `<option value="${esc(saved.id)}">${esc(saved.name)}</option>`);
+        select.value = saved.id;
+        const shot = row.querySelector('.product-shot');
+        const img = shot.querySelector('img');
+        if (img) img.src = saved.url;
+        else shot.insertAdjacentHTML('afterbegin', `<img src="${esc(saved.url)}" alt="">`);
+        shot.querySelector('.ph')?.remove();
+      }
+      status.textContent = 'Listo. Guarda para que la TV lo tome.';
+      paintPreview();
+    } catch (err) {
+      status.textContent = err.message;
+    }
+    upload.value = '';
+  });
   document.getElementById('add-row').addEventListener('click', () => {
     if (document.querySelectorAll('[data-row]').length >= 12) return;
     document.getElementById('menu-rows').insertAdjacentHTML('beforeend', menuRow(emptyItem()));
@@ -627,28 +698,50 @@ function renderMenuEditor(board) {
 
 function menuRow(item) {
   const photos = state.media.filter((file) => file.kind === 'image');
-  return `<div class="menu-row" data-row>
-    <label>Producto<input data-name maxlength="48" value="${esc(item.name)}"></label>
-    <label>Precio<input class="price-input" data-price maxlength="18" value="${esc(item.price)}"></label>
-    <label>Detalle<input data-note maxlength="48" value="${esc(item.note)}"></label>
-    <label>Categoría<input data-category maxlength="32" value="${esc(item.category || '')}" placeholder="Entradas"></label>
-    <label>Foto
-      <select data-photo>
-        <option value="">Sin foto</option>
-        ${photos.map((file) => `<option value="${esc(file.id)}" ${file.id === item.imageMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
-      </select>
-    </label>
-    <label>Etiqueta<input data-badge maxlength="16" value="${esc(item.badge)}" placeholder="Nuevo">
-      <button class="btn" type="button" data-drop>Quitar</button>
-    </label>
-  </div>`;
+  const photo = mediaOf(item.imageMediaId);
+  const thumb = photo
+    ? `<img src="${esc(photo.url)}" alt="">`
+    : `<span class="ph">${esc((item.name || '·').slice(0, 1))}</span>`;
+  return `<article class="product-card" data-row>
+    <div class="product-shot">
+      ${thumb}
+      <label class="btn file-btn">Poner foto
+        <input data-upload-photo type="file" accept="image/jpeg,image/png,image/webp" hidden>
+      </label>
+    </div>
+    <div class="product-fields">
+      <label>Producto<input data-name maxlength="48" value="${esc(item.name)}"></label>
+      <label>Precio<input class="price-input" data-price maxlength="18" value="${esc(item.price)}"></label>
+      <label>Detalle<input data-note maxlength="48" value="${esc(item.note)}"></label>
+      <label>Categoría<input data-category maxlength="32" value="${esc(item.category || '')}" placeholder="Entradas"></label>
+      <label>Foto ya subida
+        <select data-photo>
+          <option value="">Sin foto</option>
+          ${photos.map((file) => `<option value="${esc(file.id)}" ${file.id === item.imageMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
+        </select>
+      </label>
+      <label>Etiqueta<input data-badge maxlength="16" value="${esc(item.badge)}" placeholder="Nuevo"></label>
+    </div>
+    <button class="btn danger" type="button" data-drop>Quitar</button>
+  </article>`;
+}
+
+async function uploadOne(file) {
+  const body = new FormData();
+  body.append('file', file);
+  const saved = await api('/api/media', { method: 'POST', body });
+  state.media = [saved, ...state.media.filter((item) => item.id !== saved.id)];
+  return saved;
 }
 
 async function saveMenu() {
   const status = document.getElementById('menu-status');
   const draft = readMenuForm();
   try {
-    const saved = await api(`/api/boards/${state.boardId}`, { method: 'PATCH', body: JSON.stringify(draft) });
+    const saved = await api(`/api/boards/${state.boardId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ ...draft, templateId: document.getElementById('menu-template')?.value || state.pickTemplate }),
+    });
     const index = state.boards.findIndex((item) => item.id === saved.id);
     if (index >= 0) state.boards[index] = saved;
     status.textContent = 'Guardado. La TV actualiza el precio al momento.';

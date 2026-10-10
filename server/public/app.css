@@ -162,8 +162,49 @@ input:focus, select:focus, button:focus-visible {
   padding: 0;
 }
 .split { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
-.choice { width: 100%; text-align: left; margin-bottom: 8px; }
-.choice[aria-pressed="true"] { border-color: var(--action); background: #e7f2ff; }
+.choice { width: 100%; text-align: left; margin-bottom: 8px; border: 1px solid var(--line); background: white; }
+.choice[aria-pressed="true"] { border-color: var(--navy); background: var(--navy); color: white; }
+.template-rail { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0; }
+.chip {
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 0 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chip.is-on { background: var(--navy); color: white; border-color: var(--navy); }
+.board-list { margin-top: 12px; }
+.upload-line { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+.file-btn { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; cursor: pointer; }
+.product-card {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+  border-radius: 0 16px 0 0;
+  background: #f8fafc;
+}
+.product-shot { display: grid; gap: 8px; }
+.product-shot img, .product-shot .ph {
+  width: 132px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 0 16px 0 0;
+  background: var(--navy);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+.product-fields { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 8px 12px; }
+.product-fields label { margin: 0; }
+.item-actions .btn { min-width: 148px; }
 .inline { display: flex; gap: 8px; align-items: center; }
 .inline input[type="number"] { width: 88px; }
 .check { display: flex; gap: 8px; align-items: center; font-weight: 600; }
@@ -244,7 +285,7 @@ body.tv {
 #status { min-height: 1.4em; color: #d5e6ff; }
 
 @media (max-width: 800px) {
-  .steps, .auth-grid, .shell, .split, .screen, .plist-item, .menu-row { grid-template-columns: 1fr; }
+  .steps, .auth-grid, .shell, .split, .screen, .plist-item, .menu-row, .product-card, .upload-line, .product-fields { grid-template-columns: 1fr; }
   .side { min-height: auto; }
   .hero { padding-top: 24px; }
 }

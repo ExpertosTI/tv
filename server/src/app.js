@@ -874,13 +874,14 @@ export function createServer(options = {}) {
     const board = ownBoard(req);
     const name = req.body.name === undefined ? board.name : cleanText(req.body.name, 80);
     if (name.length < 2) fail(400, 'Ponle un nombre al menú.');
+    const templateId = templateById(req.body.templateId) ? req.body.templateId : board.template_id;
     const content = req.body.content === undefined
       ? JSON.parse(board.content_json)
-      : sanitizeContent(board.template_id, req.body.content);
+      : sanitizeContent(templateId, req.body.content);
     const updated = nowIso();
     tx(() => {
-      db.prepare('UPDATE boards SET name = ?, content_json = ?, updated_at = ? WHERE id = ?')
-        .run(name, JSON.stringify(content), updated, board.id);
+      db.prepare('UPDATE boards SET name = ?, template_id = ?, content_json = ?, updated_at = ? WHERE id = ?')
+        .run(name, templateId, JSON.stringify(content), updated, board.id);
       touchBoardsPlaylists(board.id);
     });
     res.json(publicBoard(one(db.prepare('SELECT * FROM boards WHERE id = ?'), board.id)));
@@ -1194,7 +1195,13 @@ export function createServer(options = {}) {
     if (!adminPassword) return res.status(404).send('No encontrado.');
     res.sendFile(path.join(publicDir, 'admin.html'));
   });
-  app.use(express.static(publicDir, { index: false, maxAge: '1h' }));
+  app.use(express.static(publicDir, {
+    index: false,
+    etag: true,
+    setHeaders(res, filePath) {
+      if (/\.(html|js|css)$/.test(filePath)) res.setHeader('Cache-Control', 'no-cache');
+    },
+  }));
 
   app.use((error, _req, res, _next) => {
     if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {

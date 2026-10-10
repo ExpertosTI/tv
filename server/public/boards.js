@@ -76,12 +76,19 @@
     if (content?.navy) root.style.setProperty('--navy', content.navy);
   }
 
+  function shot(item, className) {
+    const src = item.imageUrl || (item.imageMediaId ? `/api/media/${item.imageMediaId}/raw` : '');
+    if (src) return `<img class="${className || 'item-photo'}" src="${esc(src)}" alt="">`;
+    return `<span class="${className || 'item-photo'} ph">${esc((item.name || '·').slice(0, 1))}</span>`;
+  }
+
   function stack(content) {
     return `
       <header class="stack-head">${logo(content)}<div><h1>${esc(content.headline)}</h1><p>${esc(content.subtitle || content.tagline || '')}</p></div></header>
       <div class="stack">
         ${rows(content).map((item) => `
           <div class="stack-row">
+            ${shot(item)}
             <div><strong>${esc(item.name)}${badge(item.badge)}</strong><small>${esc(item.note)}</small></div>
             <b>${esc(item.price)}</b>
           </div>`).join('')}
@@ -92,6 +99,7 @@
     aurora(root, content) {
       const list = rows(content).map((item, index) => `
         <div class="aurora-row" style="animation-delay:${index * 90}ms">
+          ${shot(item)}
           <div><strong>${esc(item.name)}${badge(item.badge)}</strong><small>${esc(item.note)}</small></div>
           <div class="aurora-price">${esc(item.price)}</div>
         </div>`).join('');
@@ -111,6 +119,7 @@
           <section class="vitrina-feature">
             <div class="sheen"></div>
             <div class="feature-card">
+              ${shot(current, 'feature-photo')}
               ${logo(content)}
               <h1>${esc(content.headline)}</h1>
               <h2>${esc(current.name)}${badge(current.badge)}</h2>
@@ -120,7 +129,7 @@
           </section>
           <aside class="vitrina-side">
             <h2>${esc(content.subtitle || 'También')}</h2>
-            ${rest.map((item) => `<div class="side-row"><span>${esc(item.name)}</span><b>${esc(item.price)}</b></div>`).join('')}
+            ${rest.map((item) => `<div class="side-row">${shot(item)}<span>${esc(item.name)}</span><b>${esc(item.price)}</b></div>`).join('')}
           </aside>`);
       }
       draw();
@@ -137,6 +146,7 @@
         <div class="cinta-list">
           ${items.map((item) => `
             <div class="cinta-item">
+              ${shot(item)}
               <div>${esc(item.name)}${badge(item.badge)}<small>${esc(item.note)}</small></div>
               <span>${esc(item.price)}</span>
             </div>`).join('')}
@@ -176,7 +186,7 @@
     promo(root, content) {
       const lead = rows(content)[0] || { name: content.headline, price: '', note: content.subtitle, badge: '' };
       paint(root, content, `
-        <header class="stack-head">${logo(content)}<div><p class="carta-kicker">${esc(content.subtitle || '')}</p><h1 class="promo-title">${esc(lead.name)}</h1><p class="promo-price">${esc(lead.price)}</p><p>${esc(lead.note)}</p></div></header>
+        <header class="stack-head">${shot(lead, 'feature-photo')}${logo(content)}<div><p class="carta-kicker">${esc(content.subtitle || '')}</p><h1 class="promo-title">${esc(lead.name)}</h1><p class="promo-price">${esc(lead.price)}</p><p>${esc(lead.note)}</p></div></header>
         <div class="stack">${rows(content).slice(1).map((item) => `<div class="stack-row"><div><strong>${esc(item.name)}${badge(item.badge)}</strong></div><b>${esc(item.price)}</b></div>`).join('')}</div>`);
     },
     ticker(root, content) {
@@ -195,6 +205,7 @@
         const item = items[index % Math.max(items.length, 1)] || { name: content.headline, price: '', note: '', badge: '' };
         paint(root, content, `
           <div class="foco-copy">
+            ${shot(item, 'feature-photo')}
             ${logo(content)}
             <p class="carta-kicker">${esc(content.headline)}</p>
             <h1>${esc(item.name)}${badge(item.badge)}</h1>
@@ -213,7 +224,7 @@
     barra(root, content) {
       paint(root, content, `
         <header class="stack-head">${logo(content)}<div><h1>${esc(content.headline)}</h1><p>${esc(content.subtitle || '')}</p></div></header>
-        <div class="barra-row">${rows(content).map((item) => `<article><strong>${esc(item.name)}</strong><small>${esc(item.note)}</small><b>${esc(item.price)}</b></article>`).join('')}</div>`);
+        <div class="barra-row">${rows(content).map((item) => `<article>${shot(item)}<strong>${esc(item.name)}</strong><small>${esc(item.note)}</small><b>${esc(item.price)}</b></article>`).join('')}</div>`);
     },
     mercado(root, content) { paint(root, content, stack(content)); },
     salon(root, content) { paint(root, content, stack(content)); },
@@ -223,7 +234,7 @@
     helado(root, content) {
       paint(root, content, `
         <header class="stack-head">${logo(content)}<div><h1>${esc(content.headline)}</h1><p>${esc(content.subtitle || '')}</p></div></header>
-        <div class="helado-grid">${rows(content).map((item) => `<article class="helado-card"><strong>${esc(item.name)}${badge(item.badge)}</strong><small>${esc(item.note)}</small><b>${esc(item.price)}</b></article>`).join('')}</div>`);
+        <div class="helado-grid">${rows(content).map((item) => `<article class="helado-card">${shot(item)}<strong>${esc(item.name)}${badge(item.badge)}</strong><small>${esc(item.note)}</small><b>${esc(item.price)}</b></article>`).join('')}</div>`);
     },
     noche(root, content) { paint(root, content, stack(content)); },
   };
