@@ -33,7 +33,7 @@ mkdir -p /opt/tv.renace.tech
 cd /opt/tv.renace.tech
 git clone https://github.com/ExpertosTI/tv.git .
 docker build -t renace-tv:local ./server
-docker stack deploy -c deploy/stack.yml tv
+docker stack deploy -c deploy/stack.yml --resolve-image never tv
 docker service ls
 curl -fsSL https://tv.renace.tech/api/health
 ```
@@ -44,7 +44,7 @@ Cada cambio de código:
 cd /opt/tv.renace.tech
 git fetch origin main && git reset --hard origin/main
 docker build -t renace-tv:local ./server
-docker service update --force tv_tv
+docker service update --force --image renace-tv:local tv_tv
 curl -fsSL https://tv.renace.tech/api/health
 ```
 
