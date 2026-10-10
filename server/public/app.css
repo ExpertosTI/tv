@@ -208,6 +208,8 @@ body.tv {
 .interludes { border: 0; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .interludes legend { font-weight: 700; margin-bottom: 8px; }
 .tv-frame { position: relative; aspect-ratio: 16 / 9; background: #000; overflow: hidden; border-radius: 12px; }
+.tv-hero { margin: 0 0 16px; }
+#menu-preview { position: absolute; inset: 0; }
 .template-pick { display: grid; gap: 8px; }
 .gate {
   position: relative;

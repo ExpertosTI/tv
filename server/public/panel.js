@@ -64,6 +64,7 @@ function renderBrand() {
         <label>Acción<input name="colorAccent" type="color" value="${esc(brand.colorAccent)}"></label>
         <label>Precio<input name="colorInk" type="color" value="${esc(brand.colorInk)}"></label>
       </div>
+      <button class="btn" type="button" id="colors-from-logo">Tomar colores del logo</button>
       <button class="btn primary" type="submit">Guardar perfil</button>
       <p class="form-error" id="brand-status" role="status"></p>
     </form>
@@ -74,6 +75,8 @@ function renderBrand() {
       <p><code>${esc(location.origin)}/api/odoo/menu</code></p>
       <p><code>${esc(brand.odooToken || '')}</code></p>
     </article>`;
+  document.getElementById('colors-from-logo').addEventListener('click', () => detectLogoColors());
+  document.querySelector('[name="logoMediaId"]').addEventListener('change', () => detectLogoColors());
   document.getElementById('brand-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -94,6 +97,67 @@ function renderBrand() {
       status.textContent = err.message;
     }
   });
+}
+
+function hexByte(value) {
+  return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+}
+
+async function detectLogoColors() {
+  const status = document.getElementById('brand-status');
+  const select = document.querySelector('[name="logoMediaId"]');
+  const file = state.media.find((item) => item.id === select?.value);
+  if (!file?.url) {
+    if (status) status.textContent = 'Elige un logo en Archivos para leer sus colores.';
+    return;
+  }
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  try {
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = file.url;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, 40, 40);
+    const data = ctx.getImageData(0, 0, 40, 40).data;
+    const samples = [];
+    for (let i = 0; i < data.length; i += 16) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const alpha = data[i + 3];
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      if (alpha < 140 || max - min < 18 || max > 246) continue;
+      samples.push({ r, g, b, sat: max - min, lum: (0.3 * r) + (0.59 * g) + (0.11 * b) });
+    }
+    if (!samples.length) {
+      if (status) status.textContent = 'El logo es muy claro. Elige los colores a mano.';
+      return;
+    }
+    const accent = samples.slice().sort((a, b) => b.sat - a.sat)[0];
+    const navy = samples.slice().sort((a, b) => a.lum - b.lum)[0];
+    const ink = {
+      r: Math.round(accent.r + ((255 - accent.r) * 0.55)),
+      g: Math.round(accent.g + ((255 - accent.g) * 0.55)),
+      b: Math.round(accent.b + ((255 - accent.b) * 0.55)),
+    };
+    const paint = (name, color) => {
+      const input = document.querySelector(`[name="${name}"]`);
+      if (input) input.value = `#${hexByte(color.r)}${hexByte(color.g)}${hexByte(color.b)}`;
+    };
+    paint('colorNavy', navy);
+    paint('colorAccent', accent);
+    paint('colorInk', ink);
+    if (status) status.textContent = 'Colores leídos del logo. Guarda el perfil para verlos en la TV.';
+  } catch {
+    if (status) status.textContent = 'No pude leer el logo. Guarda los colores a mano.';
+  }
 }
 
 function renderScreens() {
@@ -407,25 +471,49 @@ function readMenuForm() {
       subtitle: document.getElementById('menu-subtitle').value,
       items,
       backgroundMediaId: document.getElementById('menu-bg')?.value || '',
+      backgroundVideoUrl: document.getElementById('menu-video')?.value || '',
+      font: document.getElementById('menu-font')?.value || 'sans',
       presentation: document.getElementById('menu-mode')?.value || 'rejilla',
       interludeMediaIds: [...document.querySelectorAll('[data-interlude]:checked')].map((input) => input.value),
     },
   };
 }
 
+function withBrand(content) {
+  const brand = state.brand || {};
+  return {
+    ...content,
+    accent: brand.colorInk,
+    action: brand.colorAccent,
+    navy: brand.colorNavy,
+    logoUrl: brand.logoUrl,
+    tagline: brand.tagline,
+  };
+}
+
 function paintPreview() {
   const frame = document.getElementById('menu-preview');
   const board = state.boards.find((item) => item.id === state.boardId);
-  if (!frame || !board) return;
+  if (!frame || !board || !document.getElementById('menu-name')) return;
   const draft = readMenuForm();
-  window.RenaceBoards.mount(frame, board.templateId, draft.content);
+  window.RenaceBoards.mount(frame, board.templateId, withBrand(draft.content));
+}
+
+function previewTemplate() {
+  const frame = document.getElementById('menu-preview');
+  const select = document.querySelector('#new-menu select');
+  if (!frame || !select) return;
+  const found = state.templates.find((item) => item.id === select.value);
+  if (!found?.defaults) return;
+  window.RenaceBoards.mount(frame, found.id, withBrand({ ...found.defaults, font: 'sans', presentation: 'rejilla' }));
 }
 
 function renderMenus() {
   const selected = state.boards.find((board) => board.id === state.boardId) || state.boards[0] || null;
   state.boardId = selected?.id || null;
   main.innerHTML = `
-    <div class="panel-head"><div><p class="step-no">Menús</p><h2>Precios en vivo</h2><p class="muted">Elige una plantilla, cambia el precio y la TV lo muestra con movimiento. No hace falta volver a subir una imagen.</p></div></div>
+    <div class="panel-head"><div><p class="step-no">Menús</p><h2>Precios en vivo</h2><p class="muted">Elige el modo y míralo arriba. El menú queda encima de la foto o del video, en TV, tablet y teléfono.</p></div></div>
+    <div class="tv-frame tv-hero"><div id="menu-preview"></div></div>
     <div class="split">
       <div>
         <form id="new-menu" class="card template-pick">
@@ -449,6 +537,7 @@ function renderMenus() {
   const showBlurb = () => {
     const found = state.templates.find((item) => item.id === select.value);
     blurb.textContent = found?.blurb || '';
+    previewTemplate();
   };
   select.addEventListener('change', showBlurb);
   showBlurb();
@@ -477,14 +566,21 @@ function renderMenuEditor(board) {
   const items = board.content.items.length ? board.content.items : [emptyItem()];
   editor.innerHTML = `
     <article class="card menu-editor">
-      <div class="tv-frame"><div id="menu-preview"></div></div>
       <label>Nombre del menú<input id="menu-name" maxlength="80" value="${esc(board.name)}"></label>
       <label>Título en pantalla<input id="menu-headline" maxlength="60" value="${esc(board.content.headline)}"></label>
       <label>Subtítulo<input id="menu-subtitle" maxlength="90" value="${esc(board.content.subtitle)}"></label>
       <label>Fondo
         <select id="menu-bg">
           <option value="">Patrón de la marca</option>
-          ${state.media.filter((file) => file.kind === 'image').map((file) => `<option value="${esc(file.id)}" ${file.id === board.content.backgroundMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
+          ${state.media.filter((file) => file.kind === 'image' || file.kind === 'video').map((file) => `<option value="${esc(file.id)}" ${file.id === board.content.backgroundMediaId ? 'selected' : ''}>${esc(file.name)}</option>`).join('')}
+        </select>
+      </label>
+      <label>Video por enlace
+        <input id="menu-video" type="url" inputmode="url" maxlength="400" placeholder="https://www.youtube.com/watch?v=" value="${esc(board.content.backgroundVideoUrl || '')}">
+      </label>
+      <label>Letra
+        <select id="menu-font">
+          ${[['sans', 'Sans'], ['serif', 'Serif'], ['display', 'Impacto'], ['mono', 'Máquina'], ['rounded', 'Redonda'], ['condensed', 'Condensada']].map(([id, label]) => `<option value="${id}" ${board.content.font === id ? 'selected' : ''}>${label}</option>`).join('')}
         </select>
       </label>
       <label>Cómo entra

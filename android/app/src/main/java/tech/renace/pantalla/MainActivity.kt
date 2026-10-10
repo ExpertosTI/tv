@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         boardView = findViewById(R.id.stageBoard)
         boardView.setBackgroundColor(Color.BLACK)
         boardView.settings.javaScriptEnabled = true
+        boardView.settings.domStorageEnabled = true
         boardView.settings.mediaPlaybackRequiresUserGesture = false
         boardView.webViewClient = WebViewClient()
         newCodeButton = findViewById(R.id.newCodeButton)

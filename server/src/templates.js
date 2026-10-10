@@ -1,3 +1,9 @@
+const FONTS = ['sans', 'serif', 'display', 'mono', 'rounded', 'condensed'];
+
+function dish(name, price, note, badge = '') {
+  return { name, price, note, badge };
+}
+
 export const TEMPLATES = [
   {
     id: 'aurora',
@@ -83,7 +89,155 @@ export const TEMPLATES = [
       items: [],
     },
   },
+  {
+    id: 'promo',
+    name: 'Promo',
+    blurb: 'El anuncio grande encima del video o la foto.',
+    defaults: menu('2x1 hasta las 6', 'Solo hoy en el local', [
+      dish('Combo familiar', 'RD$ 690', 'Pizza y refresco', 'Hoy'),
+      dish('Postre', 'RD$ 0', 'De cortesía', '2x1'),
+    ]),
+  },
+  {
+    id: 'ticker',
+    name: 'Cinta de ofertas',
+    blurb: 'Los precios recorren la pantalla sobre el fondo.',
+    defaults: menu('Ofertas de la semana', 'Pasa el video y lee la cinta', [
+      dish('Arroz 5 lb', 'RD$ 245', 'Marca de la casa'),
+      dish('Aceite', 'RD$ 310', '1 litro'),
+      dish('Huevos', 'RD$ 180', 'Cubeta'),
+      dish('Pollo', 'RD$ 89', 'La libra'),
+    ]),
+  },
+  {
+    id: 'duo',
+    name: 'Dos columnas',
+    blurb: 'La carta partida en dos, legible en TV y tablet.',
+    defaults: menu('Menú del día', 'Almuerzo y cena', [
+      dish('Sopa', 'RD$ 180', 'Del día'),
+      dish('Pollo', 'RD$ 420', 'Guisado'),
+      dish('Pescado', 'RD$ 540', 'Frito o plancha'),
+      dish('Jugo', 'RD$ 90', 'Natural'),
+    ]),
+  },
+  {
+    id: 'foco',
+    name: 'Foco',
+    blurb: 'Un producto a la vez, enorme, sobre la imagen.',
+    defaults: menu('Prueba esto', 'Rota solo', [
+      dish('Burger', 'RD$ 390', 'Doble carne', 'Top'),
+      dish('Papas', 'RD$ 140', 'Grandes'),
+      dish('Malteada', 'RD$ 180', 'Vainilla'),
+    ]),
+  },
+  {
+    id: 'pizarra',
+    name: 'Pizarra',
+    blurb: 'Como la pizarra del café, con tu foto detrás.',
+    defaults: menu('Escrito hoy', 'Se borra y se vuelve a poner', [
+      dish('Café', 'RD$ 80', 'Taza'),
+      dish('Tostada', 'RD$ 120', 'Aguacate'),
+      dish('Jugo verde', 'RD$ 160', 'Sin azúcar'),
+    ]),
+  },
+  {
+    id: 'luxe',
+    name: 'Carta fina',
+    blurb: 'Restaurante: nombres serios y el precio a la derecha.',
+    defaults: menu('Cena', 'Reserva en puerta', [
+      dish('Entrada', 'RD$ 480', 'Del chef'),
+      dish('Principal', 'RD$ 980', 'Corte del día'),
+      dish('Copa', 'RD$ 320', 'Casa'),
+    ]),
+  },
+  {
+    id: 'barra',
+    name: 'Barra',
+    blurb: 'Tragos en fichas horizontales sobre el video.',
+    defaults: menu('Barra abierta', 'Pide al bartender', [
+      dish('Cerveza', 'RD$ 150', 'Nacional'),
+      dish('Ron', 'RD$ 180', 'En las rocas'),
+      dish('Cóctel', 'RD$ 280', 'De la casa', 'Nuevo'),
+      dish('Agua', 'RD$ 60', 'Botella'),
+    ]),
+  },
+  {
+    id: 'mercado',
+    name: 'Mercado',
+    blurb: 'Etiquetas de precio para colmado o supermercado.',
+    defaults: menu('Precios claros', 'Esta semana', [
+      dish('Leche', 'RD$ 75', 'Litro'),
+      dish('Pan', 'RD$ 40', 'Unidad'),
+      dish('Queso', 'RD$ 220', 'Libra'),
+      dish('Detergente', 'RD$ 165', '500 g'),
+    ]),
+  },
+  {
+    id: 'salon',
+    name: 'Salón',
+    blurb: 'Servicios de belleza, spa o barbería.',
+    defaults: menu('Servicios', 'Sin cita o con cita', [
+      dish('Corte', 'RD$ 400', '30 min'),
+      dish('Color', 'RD$ 1800', 'Consulta'),
+      dish('Barba', 'RD$ 250', 'Toalla caliente'),
+      dish('Manicure', 'RD$ 500', 'Clásica'),
+    ]),
+  },
+  {
+    id: 'hotel',
+    name: 'Hotel',
+    blurb: 'Tarifas de habitación o paquetes.',
+    defaults: menu('Tarifas de hoy', 'Desayuno incluido', [
+      dish('Estándar', 'RD$ 4500', 'Dos personas'),
+      dish('Superior', 'RD$ 6200', 'Vista'),
+      dish('Suite', 'RD$ 9800', 'Sala'),
+    ]),
+  },
+  {
+    id: 'botica',
+    name: 'Farmacia',
+    blurb: 'Promos de farmacia, ópticas o clínicas.',
+    defaults: menu('Promociones', 'Pregunta en el mostrador', [
+      dish('Vitaminas', 'RD$ 390', 'Frasco'),
+      dish('Protector', 'RD$ 450', 'FPS 50', '2x1'),
+      dish('Presión', 'Gratis', 'Toma de hoy'),
+    ]),
+  },
+  {
+    id: 'club',
+    name: 'Planes',
+    blurb: 'Membresías de gimnasio, academia o club.',
+    defaults: menu('Elige tu plan', 'Empieza esta semana', [
+      dish('Mes', 'RD$ 1500', 'Área de pesas'),
+      dish('Trimestre', 'RD$ 3900', 'Clases incluidas', 'Ahorra'),
+      dish('Día', 'RD$ 250', 'Pase'),
+    ]),
+  },
+  {
+    id: 'helado',
+    name: 'Sabores',
+    blurb: 'Heladería, postres o jugos en tarjetas.',
+    defaults: menu('Sabores de hoy', 'Copa, cono o vaso', [
+      dish('Chocolate', 'RD$ 120', 'Dos bolas'),
+      dish('Fresa', 'RD$ 120', 'Dos bolas'),
+      dish('Coco', 'RD$ 140', 'Especial', 'Nuevo'),
+    ]),
+  },
+  {
+    id: 'noche',
+    name: 'Evento',
+    blurb: 'Fiesta, concierto o noche temática.',
+    defaults: menu('Viernes de música', 'Puertas a las 9', [
+      dish('Cover', 'RD$ 300', 'Antes de las 11'),
+      dish('Mesa', 'RD$ 2500', 'Cuatro personas'),
+      dish('Botella', 'RD$ 1800', 'Casa'),
+    ]),
+  },
 ];
+
+function menu(headline, subtitle, items) {
+  return { headline, subtitle, items };
+}
 
 function clip(value, max) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -94,7 +248,20 @@ export function templateById(id) {
 }
 
 export function publicTemplates() {
-  return TEMPLATES.map(({ id, name, blurb }) => ({ id, name, blurb }));
+  return TEMPLATES.map(({ id, name, blurb, defaults }) => ({ id, name, blurb, defaults }));
+}
+
+function videoLink(value) {
+  const raw = String(value || '').trim().slice(0, 400);
+  if (!raw) return '';
+  let url;
+  try { url = new URL(raw); } catch { return ''; }
+  if (url.protocol !== 'https:' || url.username || url.password) return '';
+  const host = url.hostname.replace(/^www\./, '').toLowerCase();
+  const hosts = ['youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com', 'vimeo.com', 'player.vimeo.com'];
+  if (hosts.includes(host)) return url.toString();
+  if (/\.(mp4|webm|m3u8)$/i.test(url.pathname)) return url.toString();
+  return '';
 }
 
 function mediaId(value) {
@@ -161,6 +328,8 @@ export function sanitizeContent(templateId, input) {
     backgroundMediaId: mediaId(background),
     presentation,
     interludeMediaIds,
+    backgroundVideoUrl: videoLink(source.backgroundVideoUrl),
+    font: FONTS.includes(source.font) ? source.font : 'sans',
     categories,
     items,
   };

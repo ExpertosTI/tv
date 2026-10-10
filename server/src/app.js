@@ -323,7 +323,11 @@ export function createServer(options = {}) {
   function decorateContent(req, content, tenant, screen) {
     const next = { ...content };
     const exp = Date.now() + 12 * 60 * 60 * 1000;
-    if (next.backgroundMediaId) next.backgroundUrl = mediaUrl(req, next.backgroundMediaId, screen, exp);
+    if (next.backgroundMediaId) {
+      next.backgroundUrl = mediaUrl(req, next.backgroundMediaId, screen, exp);
+      const media = one(db.prepare('SELECT kind FROM media WHERE id = ?'), next.backgroundMediaId);
+      next.backgroundKind = media?.kind === 'video' ? 'video' : 'image';
+    }
     if (tenant?.logo_media_id) next.logoUrl = mediaUrl(req, tenant.logo_media_id, screen, exp);
     next.items = (next.items || []).map((item) => decorateItem(req, item, screen, exp));
     next.categories = (next.categories || []).map((category) => ({
@@ -553,9 +557,9 @@ export function createServer(options = {}) {
   app.use(express.json({ limit: '1mb' }));
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Referrer-Policy', 'same-origin');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' https://accounts.google.com; script-src 'self' https://accounts.google.com; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; media-src 'self' https: blob:; style-src 'self' 'unsafe-inline' https://accounts.google.com; script-src 'self' https://accounts.google.com; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
     next();
   });
 
