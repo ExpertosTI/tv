@@ -6,7 +6,7 @@
   <title>RENACE Pantalla</title>
   <meta name="description" content="Menú en la TV para cafeterías y negocios. Entras con un código y publicas JPG, GIF o video a pantalla completa.">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/app.css">
+  <link rel="stylesheet" href="/app.css?v=5">
 </head>
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
@@ -26,9 +26,9 @@
   <main id="contenido">
     <div class="section">
       <div class="steps">
-        <article class="card"><p class="step-no">01</p><h2>Abre la app en la TV</h2><p class="muted">Aparece un código de 6 caracteres. No hace falta escribir correo con el control.</p></article>
-        <article class="card"><p class="step-no">02</p><h2>Vincúlala desde aquí</h2><p class="muted">Entras al panel del negocio y escribes el código que está en la pantalla.</p></article>
-        <article class="card"><p class="step-no">03</p><h2>Publica el menú</h2><p class="muted">Ordenas imágenes y videos, eliges cuántos segundos se ve cada uno y si llena la pantalla.</p></article>
+        <article class="card"><p class="step-no">01</p><h2>Entra al negocio</h2><p class="muted">Creas la cuenta con correo o con Google. El panel guarda el logo, los colores y los menús.</p></article>
+        <article class="card"><p class="step-no">02</p><h2>Vincula la TV</h2><p class="muted">La app muestra un código de 6 caracteres. Lo escribes en Pantallas y elige la lista.</p></article>
+        <article class="card"><p class="step-no">03</p><h2>Publica la carta</h2><p class="muted">Eliges la plantilla, pones foto a cada producto y un video de fondo. Si se cae la red, la TV sigue con el último menú guardado.</p></article>
       </div>
     </div>
     <div class="section" id="cuenta">
@@ -39,6 +39,7 @@
           <label>Correo<input name="email" type="email" autocomplete="username" required></label>
           <label>Contraseña<input name="password" type="password" autocomplete="current-password" required minlength="8"></label>
           <button class="btn primary" type="submit">Entrar</button>
+          <div id="google-login" class="google-slot"></div>
           <p class="form-error" id="login-error" role="alert"></p>
         </form>
         <form class="card" id="register-form">
@@ -49,6 +50,7 @@
           <label>Correo<input name="email" type="email" autocomplete="email" required></label>
           <label>Contraseña<input name="password" type="password" autocomplete="new-password" required minlength="8"></label>
           <button class="btn primary" type="submit">Crear negocio</button>
+          <div id="google-register" class="google-slot"></div>
           <p class="form-error" id="register-error" role="alert"></p>
         </form>
       </div>
@@ -59,6 +61,6 @@
     · <a href="/tv">Probar reproductor</a>
     · <a href="https://github.com/ExpertosTI/tv/releases/download/v1.3.0/app-release.apk">Descargar la app</a>
   </footer>
-  <script src="/home.js"></script>
+  <script src="/home.js?v=5"></script>
 </body>
 </html>
