@@ -41,7 +41,7 @@ fun parseState(json: String): DeviceState {
     )
 }
 
-private fun parsePlaylist(json: JSONObject): Playlist {
+internal fun parsePlaylist(json: JSONObject): Playlist {
     val itemsJson = json.optJSONArray("items")
     val items = buildList {
         if (itemsJson != null) {

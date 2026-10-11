@@ -36,7 +36,15 @@ class ApiClient(private val store: DeviceStore) {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrDefault("")
                 throw IOException(message.ifBlank { "No se pudo hablar con el servidor (${response.code})" })
             }
-            return parseState(text)
+            val state = parseState(text)
+            val root = runCatching { JSONObject(text) }.getOrNull()
+            val playlist = root?.optJSONObject("playlist")
+            if (state.paired && playlist != null && (playlist.optJSONArray("items")?.length() ?: 0) > 0) {
+                store.saveEmergency(playlist.toString())
+            } else if (state.paired) {
+                store.clearEmergency()
+            }
+            return state
         }
     }
 }

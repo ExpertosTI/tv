@@ -38,9 +38,25 @@ class DeviceStore(context: Context) {
         prefs.edit().putString(KEY_SERVER, value.trim().trimEnd('/')).apply()
     }
 
+    fun saveEmergency(playlistJson: String) {
+        prefs.edit().putString(KEY_EMERGENCY, playlistJson).apply()
+    }
+
+    fun emergencyJson(): String? = prefs.getString(KEY_EMERGENCY, null)
+
+    fun emergencyPlaylist(): Playlist? {
+        val raw = emergencyJson() ?: return null
+        return runCatching { parsePlaylist(org.json.JSONObject(raw)) }.getOrNull()
+    }
+
+    fun clearEmergency() {
+        prefs.edit().remove(KEY_EMERGENCY).apply()
+    }
+
     private companion object {
         const val KEY_ID = "device_id"
         const val KEY_SECRET = "device_secret"
         const val KEY_SERVER = "server_base"
+        const val KEY_EMERGENCY = "emergency_playlist"
     }
 }

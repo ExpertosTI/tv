@@ -10,6 +10,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.TextView
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var store: DeviceStore
     private lateinit var api: ApiClient
     private lateinit var cache: MediaCache
+    private lateinit var emergency: EmergencyMenu
     private lateinit var exo: ExoPlayer
     private lateinit var pairingPanel: LinearLayout
     private lateinit var codeText: TextView
@@ -57,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private var playJob: Job? = null
     private var activeVersion: String? = null
     private var pending: Playlist? = null
+    private var offline = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +69,7 @@ class MainActivity : AppCompatActivity() {
         store = DeviceStore(this)
         api = ApiClient(store)
         cache = MediaCache(this, api.http)
+        emergency = EmergencyMenu(this, api.http, cache) { store.serverBase() }
         pairingPanel = findViewById(R.id.pairingPanel)
         codeText = findViewById(R.id.codeText)
         statusText = findViewById(R.id.statusText)
@@ -76,7 +81,28 @@ class MainActivity : AppCompatActivity() {
         boardView.settings.javaScriptEnabled = true
         boardView.settings.domStorageEnabled = true
         boardView.settings.mediaPlaybackRequiresUserGesture = false
-        boardView.webViewClient = WebViewClient()
+        boardView.settings.allowFileAccess = true
+        boardView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                if (request.url?.host != "pantalla.local") return null
+                val file = emergency.fileFor(request.url?.path ?: return null) ?: return null
+                val name = file.name
+                val mime = when {
+                    name.endsWith(".js") -> "text/javascript"
+                    name.endsWith(".css") -> "text/css"
+                    name.endsWith(".svg") -> "image/svg+xml"
+                    name.endsWith(".html") -> "text/html"
+                    name.endsWith(".mp4") -> "video/mp4"
+                    name.endsWith(".webm") -> "video/webm"
+                    name.endsWith(".png") -> "image/png"
+                    name.endsWith(".webp") -> "image/webp"
+                    name.endsWith(".gif") -> "image/gif"
+                    else -> "image/jpeg"
+                }
+                val encoding = if (mime.startsWith("text/") || mime.endsWith("javascript")) "utf-8" else null
+                return WebResourceResponse(mime, encoding, file.inputStream())
+            }
+        }
         newCodeButton = findViewById(R.id.newCodeButton)
         playerView.useController = false
         playerView.setShutterBackgroundColor(Color.BLACK)
@@ -97,6 +123,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         hideSystemBars()
+        store.emergencyPlaylist()?.takeIf { it.items.isNotEmpty() }?.let { saved ->
+            offline = true
+            showPlayer()
+            startPlayback(saved)
+        }
         startPolling()
     }
 
@@ -140,12 +171,25 @@ class MainActivity : AppCompatActivity() {
                 if (delayMs > 0) delay(delayMs)
                 try {
                     val state = withContext(Dispatchers.IO) { api.sync() }
+                    offline = false
                     onState(state)
+                    withContext(Dispatchers.IO) { emergency.warm(store.emergencyJson()) }
                     delayMs = if (state.paired && state.playlist?.items?.isNotEmpty() == true) 4_000L else 3_000L
                 } catch (error: CancellationException) {
                     throw error
                 } catch (_: Exception) {
-                    if (pairingPanel.visibility == View.VISIBLE) statusText.text = getString(R.string.offline)
+                    val saved = store.emergencyPlaylist()
+                    if (saved != null && saved.items.isNotEmpty()) {
+                        offline = true
+                        if (playJob?.isActive != true) {
+                            showPlayer()
+                            startPlayback(saved)
+                        } else {
+                            pending = saved
+                        }
+                    } else if (pairingPanel.visibility == View.VISIBLE) {
+                        statusText.text = getString(R.string.offline)
+                    }
                     delayMs = 5_000L
                 }
             }
@@ -254,15 +298,26 @@ class MainActivity : AppCompatActivity() {
             imageView.visibility = View.GONE
             boardView.visibility = View.VISIBLE
             var shown = slide
-            if (shown.url.isNotBlank()) boardView.loadUrl(shown.url)
+            fun targetFor(item: Slide): String {
+                val local = emergency.boardUrl(item.mediaId)
+                return if (offline && local != null) local else item.url
+            }
+            val first = targetFor(shown)
+            if (first.isNotBlank()) boardView.loadUrl(first)
             val seconds = (slide.durationSeconds ?: 45).coerceIn(5, 600)
             var elapsed = 0
             while (elapsed < seconds * 1000) {
                 delay(250)
                 elapsed += 250
+                val wanted = targetFor(shown)
+                val onLocal = boardView.url.orEmpty().startsWith("https://pantalla.local/")
+                if (wanted.isNotBlank() && ((offline && !onLocal) || (!offline && onLocal))) {
+                    boardView.loadUrl(wanted)
+                }
                 val live = pending?.items?.find { it.mediaId == shown.mediaId && it.kind == "board" }
-                if (live != null && live.rev != shown.rev && live.url.isNotBlank()) {
-                    boardView.loadUrl(live.url)
+                if (live != null && live.rev != shown.rev) {
+                    val nextUrl = targetFor(live)
+                    if (nextUrl.isNotBlank()) boardView.loadUrl(nextUrl)
                     shown = live
                 }
             }
